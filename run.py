@@ -5,8 +5,10 @@ import subprocess
 import nibabel
 import numpy
 from glob import glob
-from preprocessing import preprocess_bold_fmri
+from preprocessing import preprocess_bold_fmri, make_X_Y
 import joblib
+import json
+import numpy as np
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'version')).read()
@@ -113,6 +115,9 @@ else:
     subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
     subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
 
+with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
+    task_meta = json.load(fl)
+
 for subject_label in subjects_to_analyze:
     bold_folder = get_func_bold_directory(subject_label, **vars(args))
     bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
@@ -158,4 +163,16 @@ for subject_label in subjects_to_analyze:
         preprocessed_data.append(preprocess_bold_fmri(bold_file, mask=mask))
 
     # load stimulus
+    stim_meta = []
+    stimuli = []
+    for tsv_fl, json_fl in zip(stim_tsv, stim_json):
+        with open(json_fl, 'r') as fl:
+            stim_meta.append(json.load(fl))
+        stimuli.append(np.loadtxt(tsv_fl, delimiter='\t'))
+
+    start_times = [st_meta['StartTime'] for st_meta in stim_meta]
+    stim_TR = 1 / stim_meta[0]['SamplingFrequency']
+    # add parameters from args
+    stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR)
+
 
