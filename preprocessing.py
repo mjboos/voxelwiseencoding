@@ -114,7 +114,7 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
     # remove stimulus representations that are more recent than offset_stim
     if offset_stim > 0:
         for i in range(len(stimuli)):
-            stimuli[i] = stimuli[i][:, :-int(np.round(offset_stim / stim_TR))]
+            stimuli[i] = stimuli[i][:, :-int(np.round(offset_stim / stim_TR) * n_features)]
 
     # remove fmri samples recorded after stimulus has ended
     for i in range(len(stimuli)):

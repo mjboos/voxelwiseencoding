@@ -6,9 +6,13 @@ import nibabel
 import numpy
 from glob import glob
 from preprocessing import preprocess_bold_fmri, make_X_Y
+from encoding import get_ridge_plus_scores
 import joblib
 import json
 import numpy as np
+from nilearn.masking import unmask
+from nilearn.image import new_img_like
+from nibabel import save
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'version')).read()
@@ -16,7 +20,8 @@ __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
 # FIXME: temporary for dev
 memory = joblib.Memory('/data/mboos/joblib')
 preprocess_bold_fmri = memory.cache(preprocess_bold_fmri)
-
+make_X_Y = memory.cache(make_X_Y)
+get_ridge_plus_scores = memory.cache(get_ridge_plus_scores)
 
 def create_stim_filename_from_args(subject_label, **kwargs):
     '''Creates an expression corresponding to the stimulus files. It does not differentiate between json and tsv(.gz) files yet.'''
@@ -173,6 +178,15 @@ for subject_label in subjects_to_analyze:
     start_times = [st_meta['StartTime'] for st_meta in stim_meta]
     stim_TR = 1 / stim_meta[0]['SamplingFrequency']
     # add parameters from args
-    stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR)
+    stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, filler_value=0.)
 
-
+    # FIXME: change from hard-coded to args
+    alphas = [1e-3, 1e-1, 1, 1e2, 1e3, 1e5]
+    ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, alphas=alphas)
+    # TODO: use more args in names
+    joblib.dump(ridges, os.path.join(args.output_dir, 'sub-{}_ridges.pkl'.format(subject_label)))
+    if mask:
+        scores_bold = unmask(scores, mask)
+    else:
+        scores_bold = new_img_like(bold_files[0], scores)
+    save(scores_bold, os.path.join(args.output_dir, 'sub-{}_scores.nii.gz'.format(subject_label)))
