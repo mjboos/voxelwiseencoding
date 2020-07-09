@@ -7,8 +7,8 @@ import numpy
 from glob import glob
 from preprocessing import preprocess_bold_fmri, make_X_Y
 from encoding import get_ridge_plus_scores
-import joblib
 import json
+import joblib
 import numpy as np
 from nilearn.masking import unmask
 from nilearn.image import new_img_like
@@ -16,12 +16,6 @@ from nibabel import save
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'version')).read()
-
-# FIXME: temporary for dev
-memory = joblib.Memory('/data/mboos/joblib')
-preprocess_bold_fmri = memory.cache(preprocess_bold_fmri)
-make_X_Y = memory.cache(make_X_Y)
-get_ridge_plus_scores = memory.cache(get_ridge_plus_scores)
 
 def create_stim_filename_from_args(subject_label, **kwargs):
     '''Creates an expression corresponding to the stimulus files. It does not differentiate between json and tsv(.gz) files yet.'''
@@ -34,7 +28,6 @@ def create_stim_filename_from_args(subject_label, **kwargs):
                  'stim']
     stim_expr = '_'.join([term for term in stim_expr if term])
     return stim_expr
-
 
 
 def get_func_bold_directory(subject_label, **kwargs):
@@ -67,10 +60,10 @@ def run(command, env={}):
         line = process.stdout.readline()
         line = str(line, 'utf-8')[:-1]
         print(line)
-        if line == '' and process.poll() != None:
+        if line == '' and process.poll() is not None:
             break
     if process.returncode != 0:
-        raise Exception("Non zero return code: %d"%process.returncode)
+        raise Exception("Non zero return code: {}".format(process.returncode))
 
 parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
