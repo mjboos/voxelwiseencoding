@@ -25,12 +25,14 @@ def get_remove_idx(lagged_stimulus, remove_nan=True):
     else:
         raise ValueError('remove_nan needs to be either True, False, or a float between 0 and 1.')
 
-def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2., stim_TR=0.1, filler_value=np.nan, remove_nans=0.5):
+def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_stim=2., filler_value=np.nan, remove_nans=True):
     '''Creates (lagged) features and fMRI matrices concatenated along runs
     
     INPUT:
     stimuli      - list of stimulus representations
     fmri         - list of fMRI ndarrays
+    TR           - repetition time of the fMRI data in seconds
+    stim_TR      - repetition time of the stimulus in seconds
     lag_time     - lag to introduce for stimuli in seconds
     start_times  - starting time of the stimuli relative to fMRI recordings in seconds
                    appends zeros to stimulus representation to match fMRI and stimulus
@@ -38,8 +40,6 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
                    i.e. when predicting fmri at time t use only stimulus features
                    before t-offset_stim. This reduces the number of time points used
                    in the model.
-    TR           - repetition time of the fMRI data in seconds
-    stim_TR      - repetition time of the stimulus in seconds
     filler_value - appends filler_value to stimulus array to account for starting_time
                    use np.nan here with remove_nans=True to remove fmri/stimulus samples where no stimulus was presented
     remove_nans  - bool or float 0<=remove_nans<=1,
@@ -55,6 +55,8 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
         'Instead fMRI has {} and stimulus {} runs.'.format(len(fmri), len(stimuli)))
     # find out temporal alignment
     stim_samples_per_TR = TR / stim_TR
+    if stim_samples_per_TR < 1:
+        raise ValueError('Stimulus TR is larger than fMRI TR')
     # check if result is close to an integer
     if not np.isclose(stim_samples_per_TR, np.round(stim_samples_per_TR)):
         warnings.warn('Stimulus timing and fMRI timing do not align. '
@@ -63,7 +65,7 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
         'per TR.'.format(stim_samples_per_TR, stim_TR, TR), RuntimeWarning)
     stim_samples_per_TR = int(np.round(stim_samples_per_TR))
     # check if lag time is multiple of TR
-    if not (np.isclose(lag_time % TR, 0) or np.isclose(lag_time % TR, np.round(TR))):
+    if not np.isclose(lag_time / TR, np.round(lag_time / TR)):
         raise ValueError('lag_time should be a multiple of TR so '
                 'that stimulus/fMRI alignment does not change.')
 
@@ -100,10 +102,8 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
         stimuli[i] = np.vstack(
                 [np.full((n_prepend_lag, n_features * stim_samples_per_TR), filler_value),
                  stimuli[i]])
-
-        stimuli[i] = np.squeeze(view_as_windows(stimuli[i], (lag_TR, 1)))
+        stimuli[i] = np.swapaxes(np.squeeze(view_as_windows(stimuli[i], (lag_TR, 1))), 1, 2)
         stimuli[i] = np.reshape(stimuli[i], (stimuli[i].shape[0], -1))
-
     # remove nans in stim/fmri here
     if remove_nans:
         for i in range(len(stimuli)):
@@ -115,7 +115,6 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
     if offset_stim > 0:
         for i in range(len(stimuli)):
             stimuli[i] = stimuli[i][:, :-int(np.round(offset_stim / stim_TR) * n_features)]
-
     # remove fmri samples recorded after stimulus has ended
     for i in range(len(stimuli)):
         if fmri[i].shape[0] != stimuli[i].shape[0]:
@@ -126,5 +125,4 @@ def make_X_Y(stimuli, fmri, lag_time=6.0, start_times=None, offset_stim=2., TR=2
                 TR*fmri[i].shape[0], TR*stimuli[i].shape[0]), RuntimeWarning)
             if fmri[i].shape[0] > stimuli[i].shape[0]:
                 fmri[i] = fmri[i][:-(fmri[i].shape[0]-stimuli[i].shape[0])]
-
     return np.vstack(stimuli), np.vstack(fmri)
