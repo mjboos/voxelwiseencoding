@@ -1,3 +1,5 @@
+![Python package](https://github.com/mjboos/voxelwiseencoding/workflows/Python%20package/badge.svg)
+
 ## Voxelwise Encoding BIDS App
 
 This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html)).
