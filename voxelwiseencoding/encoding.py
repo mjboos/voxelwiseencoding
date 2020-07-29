@@ -13,9 +13,26 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score
 
+__all__ = ['get_ridge_plus_scores', 'ridge_gridsearch_per_target']
+
 def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, **kwargs):
-    '''8-fold CV with inner CV gridsearch over alphas for Ridge(**kwargs) of X, y.
-    Returns concatenated test-set predictions and 8 RidgeCV objects trained on the training folds'''
+    '''Returns ridge regressions trained in a cross-validation on n_splits of the data and scores on the left-out folds
+
+    Parameters
+    ----------
+    X : ndarray of shape (samples, features)
+    y : ndarray of shape (samples, targets)
+    alphas : None or list of floats, optional
+             Regularization parameters to be used for Ridge regression
+    n_splits : int, optional
+    scorer : None or any sci-kit learn compatible scoring function, optional
+             default uses r2_score
+    kwargs : additional arguments transferred to ridge_gridsearch_per_target
+
+    Returns
+    -------
+    tuple of n_splits RidgeCV estimators trained on training folds
+    and scores for all concatenated out-of-fold predictions'''
     if scorer is None:
         scorer = lambda x, y : r2_score(x, y, multioutput='raw_values')
     kfold = KFold(n_splits=n_splits)
@@ -30,7 +47,22 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, **kwargs):
     return ridges, scorer(y, np.vstack(predictions))
 
 def ridge_gridsearch_per_target(X, y, alphas, n_splits=7, **kwargs):
-    '''Does gridsearch for alphas on X, y with cv and returns refit Ridge with best alphas'''
+    '''Runs Ridge gridsearch across alphas for each target in y
+
+    Parameters
+    ----------
+    X : ndarray of shape (samples, features)
+    y : ndarray of shape (samples, targets)
+    alphas : None or list of floats, optional
+             Regularization parameters to be used for Ridge regression
+    n_splits : int, optional
+    kwargs : keyword parameters to be transferred to Ridge regression
+
+    Returns
+    -------
+    Ridge regression trained on X, y with optimal alpha per target
+    determined by KFold cross-validation
+    '''
     from sklearn.linear_model import Ridge
     from sklearn.model_selection import KFold
     from sklearn.metrics import mean_squared_error

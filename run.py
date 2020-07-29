@@ -5,8 +5,8 @@ import subprocess
 import nibabel
 import numpy
 from glob import glob
-from preprocessing import preprocess_bold_fmri, make_X_Y
-from encoding import get_ridge_plus_scores
+from voxelwiseencoding.preprocessing import preprocess_bold_fmri, make_X_Y
+from voxelwiseencoding.encoding import get_ridge_plus_scores
 import json
 import joblib
 import numpy as np
@@ -65,121 +65,122 @@ def run(command, env={}):
     if process.returncode != 0:
         raise Exception("Non zero return code: {}".format(process.returncode))
 
-parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
-parser.add_argument('bids_dir', help='The directory with the input dataset '
-                    'formatted according to the BIDS standard.')
-parser.add_argument('output_dir', help='The directory where the output files '
-                    'should be stored. If you want to mask the data please include '
-                    'folder called masks that contains either subject-specific NifTI '
-                    'masks named sub-<participant_label>_mask.nii.gz or a group-level '
-                    'mask named group_mask.nii.gz.')
-parser.add_argument('--participant_label', help='The label(s) of the participant(s) that should be analyzed. The label '
-                   'corresponds to sub-<participant_label> from the BIDS spec '
-                   '(so it does not include "sub-"). If this parameter is not '
-                   'provided all subjects should be analyzed. Multiple '
-                   'participants can be specified with a space separated list.',
-                   nargs="+")
-parser.add_argument('--skip_bids_validator', help='Whether or not to perform BIDS dataset validation',
-                   action='store_true')
-parser.add_argument('-d', '--desc', help='The label of the preprocessed '
-                    'data to use. Corresponds to label in desc-<label> in the '
-                    'naming of the BOLD NifTIs. If not provided, assumes no derivative '
-                    'label is used.')
-parser.add_argument('-t', '--task', help='The task-label to use for training the voxel-wise encoding model. Corresponds to label in task-<label> in BIDS naming.')
-parser.add_argument('-s', '--ses', help='The label of the session to use. '
-                    'Corresponds to label in ses-<label> in the BIDS directory.')
-parser.add_argument('-v', '--version', action='version',
-                    version='BIDS-App example version {}'.format(__version__))
-parser.add_argument('-r', '--recording', help='The label of the stimulus recording to use. '
-                    'Corresponds to label in recording-<label> of the stimulus.')
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
+    parser.add_argument('bids_dir', help='The directory with the input dataset '
+                        'formatted according to the BIDS standard.')
+    parser.add_argument('output_dir', help='The directory where the output files '
+                        'should be stored. If you want to mask the data please include '
+                        'folder called masks that contains either subject-specific NifTI '
+                        'masks named sub-<participant_label>_mask.nii.gz or a group-level '
+                        'mask named group_mask.nii.gz.')
+    parser.add_argument('--participant_label', help='The label(s) of the participant(s) that should be analyzed. The label '
+                    'corresponds to sub-<participant_label> from the BIDS spec '
+                    '(so it does not include "sub-"). If this parameter is not '
+                    'provided all subjects should be analyzed. Multiple '
+                    'participants can be specified with a space separated list.',
+                    nargs="+")
+    parser.add_argument('--skip_bids_validator', help='Whether or not to perform BIDS dataset validation',
+                    action='store_true')
+    parser.add_argument('-d', '--desc', help='The label of the preprocessed '
+                        'data to use. Corresponds to label in desc-<label> in the '
+                        'naming of the BOLD NifTIs. If not provided, assumes no derivative '
+                        'label is used.')
+    parser.add_argument('-t', '--task', help='The task-label to use for training the voxel-wise encoding model. Corresponds to label in task-<label> in BIDS naming.')
+    parser.add_argument('-s', '--ses', help='The label of the session to use. '
+                        'Corresponds to label in ses-<label> in the BIDS directory.')
+    parser.add_argument('-v', '--version', action='version',
+                        version='BIDS-App example version {}'.format(__version__))
+    parser.add_argument('-r', '--recording', help='The label of the stimulus recording to use. '
+                        'Corresponds to label in recording-<label> of the stimulus.')
 
-# TODO: make list of arguments to be included
+    # TODO: make list of arguments to be included
 
-# split
-# what to save
+    # split
+    # what to save
 
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-if not args.skip_bids_validator:
-    run('bids-validator %s'%args.bids_dir)
+    if not args.skip_bids_validator:
+        run('bids-validator %s'%args.bids_dir)
 
-subjects_to_analyze = []
-# only for a subset of subjects
-if args.participant_label:
-    subjects_to_analyze = args.participant_label
-# for all subjects
-else:
-    subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
-    subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
-
-with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
-    task_meta = json.load(fl)
-
-for subject_label in subjects_to_analyze:
-    bold_folder = get_func_bold_directory(subject_label, **vars(args))
-    bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
-    bold_files = sorted(glob(os.path.join(bold_folder, bold_glob)))
-    stim_glob = create_stim_filename_from_args(subject_label, **vars(args))
-
-    # first check if there exist subject specific stimulus files
-    stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv.gz'])))
-    if not stim_tsv:
-        # try to get uncompressed tsv
-        stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv'])))
-        if not stim_tsv:
-            # try to get tsvs in root directory without subject specifier
-            root_glob = '_'.join(stim_glob.split('_')[1:])
-            stim_tsv = glob(os.path.join(args.bids_dir,
-                                              '.'.join([root_glob, 'tsv.gz'])))
-            if not stim_tsv:
-                # and check again in root for tsv
-                stim_tsv = glob(os.path.join(args.bids_dir,
-                                                  '.'.join([root_glob, 'tsv'])))
-                if not stim_tsv:
-                    raise ValueError('No stimulus files found! [Mention naming scheme and location here]')
-    stim_tsv = sorted(stim_tsv)
-    stim_json = sorted(glob(os.path.join(bold_folder, '.'.join([stim_glob, 'json']))))
-    if not stim_json:
-        raise ValueError('No stimulus json files found! [mention more]')
-
-    if not (len(stim_tsv) == len(stim_json) and len(stim_json) == len(bold_files)):
-        raise ValueError('Number of stimulus tsv, stimulus json, and BOLD files differ.'
-                ' Stimulus json: {} \n stimulus tsv: {} \n BOLD: {}'.format(stim_json, stim_tsv, bold_files))
-
-    mask = None
-    masks_path = os.path.join(args.output_dir, 'masks')
-    if os.path.exists(masks_path):
-        if os.path.exists(os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))):
-            mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
-        elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
-            mask = os.path.join(masks_path, 'group_mask.nii.gz')
-
-    # do BOLD preprocessing
-    preprocessed_data = []
-    for bold_file in bold_files:
-        preprocessed_data.append(preprocess_bold_fmri(bold_file, mask=mask))
-
-    # load stimulus
-    stim_meta = []
-    stimuli = []
-    for tsv_fl, json_fl in zip(stim_tsv, stim_json):
-        with open(json_fl, 'r') as fl:
-            stim_meta.append(json.load(fl))
-        stimuli.append(np.loadtxt(tsv_fl, delimiter='\t'))
-
-    start_times = [st_meta['StartTime'] for st_meta in stim_meta]
-    stim_TR = 1 / stim_meta[0]['SamplingFrequency']
-    # add parameters from args
-    stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, filler_value=0.)
-
-    # FIXME: change from hard-coded to args
-    alphas = [1e-3, 1e-1, 1, 1e2, 1e3, 1e5]
-    ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, alphas=alphas)
-    # TODO: use more args in names
-    joblib.dump(ridges, os.path.join(args.output_dir, 'sub-{}_ridges.pkl'.format(subject_label)))
-    if mask:
-        scores_bold = unmask(scores, mask)
+    subjects_to_analyze = []
+    # only for a subset of subjects
+    if args.participant_label:
+        subjects_to_analyze = args.participant_label
+    # for all subjects
     else:
-        scores_bold = new_img_like(bold_files[0], scores)
-    save(scores_bold, os.path.join(args.output_dir, 'sub-{}_scores.nii.gz'.format(subject_label)))
+        subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
+        subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
+
+    with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
+        task_meta = json.load(fl)
+
+    for subject_label in subjects_to_analyze:
+        bold_folder = get_func_bold_directory(subject_label, **vars(args))
+        bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
+        bold_files = sorted(glob(os.path.join(bold_folder, bold_glob)))
+        stim_glob = create_stim_filename_from_args(subject_label, **vars(args))
+
+        # first check if there exist subject specific stimulus files
+        stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv.gz'])))
+        if not stim_tsv:
+            # try to get uncompressed tsv
+            stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv'])))
+            if not stim_tsv:
+                # try to get tsvs in root directory without subject specifier
+                root_glob = '_'.join(stim_glob.split('_')[1:])
+                stim_tsv = glob(os.path.join(args.bids_dir,
+                                                '.'.join([root_glob, 'tsv.gz'])))
+                if not stim_tsv:
+                    # and check again in root for tsv
+                    stim_tsv = glob(os.path.join(args.bids_dir,
+                                                    '.'.join([root_glob, 'tsv'])))
+                    if not stim_tsv:
+                        raise ValueError('No stimulus files found! [Mention naming scheme and location here]')
+        stim_tsv = sorted(stim_tsv)
+        stim_json = sorted(glob(os.path.join(bold_folder, '.'.join([stim_glob, 'json']))))
+        if not stim_json:
+            raise ValueError('No stimulus json files found! [mention more]')
+
+        if not (len(stim_tsv) == len(stim_json) and len(stim_json) == len(bold_files)):
+            raise ValueError('Number of stimulus tsv, stimulus json, and BOLD files differ.'
+                    ' Stimulus json: {} \n stimulus tsv: {} \n BOLD: {}'.format(stim_json, stim_tsv, bold_files))
+
+        mask = None
+        masks_path = os.path.join(args.output_dir, 'masks')
+        if os.path.exists(masks_path):
+            if os.path.exists(os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))):
+                mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
+            elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
+                mask = os.path.join(masks_path, 'group_mask.nii.gz')
+
+        # do BOLD preprocessing
+        preprocessed_data = []
+        for bold_file in bold_files:
+            preprocessed_data.append(preprocess_bold_fmri(bold_file, mask=mask))
+
+        # load stimulus
+        stim_meta = []
+        stimuli = []
+        for tsv_fl, json_fl in zip(stim_tsv, stim_json):
+            with open(json_fl, 'r') as fl:
+                stim_meta.append(json.load(fl))
+            stimuli.append(np.loadtxt(tsv_fl, delimiter='\t'))
+
+        start_times = [st_meta['StartTime'] for st_meta in stim_meta]
+        stim_TR = 1 / stim_meta[0]['SamplingFrequency']
+        # add parameters from args
+        stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, filler_value=0.)
+
+        # FIXME: change from hard-coded to args
+        alphas = [1e-3, 1e-1, 1, 1e2, 1e3, 1e5]
+        ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, alphas=alphas)
+        # TODO: use more args in names
+        joblib.dump(ridges, os.path.join(args.output_dir, 'sub-{}_ridges.pkl'.format(subject_label)))
+        if mask:
+            scores_bold = unmask(scores, mask)
+        else:
+            scores_bold = new_img_like(bold_files[0], scores)
+        save(scores_bold, os.path.join(args.output_dir, 'sub-{}_scores.nii.gz'.format(subject_label)))
