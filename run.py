@@ -29,6 +29,17 @@ def create_stim_filename_from_args(subject_label, **kwargs):
     stim_expr = '_'.join([term for term in stim_expr if term])
     return stim_expr
 
+def create_output_filename_from_args(subject_label, **kwargs):
+    '''Creates filename for the model output'''
+    output_expr = ['sub-{}'.format(subject_label),
+                 'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
+                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
+                 'desc-{}'.format(kwargs['desc']) if kwargs['desc'] else None,
+                 'recording-{}'.format(kwargs['recording']) if kwargs['recording'] else None]
+    output_expr = '_'.join([term for term in output_expr if term])
+    return output_expr
+
+
 
 def get_func_bold_directory(subject_label, **kwargs):
     '''Returns a path to the directory in which the bold files of the given subject reside'''
@@ -66,7 +77,7 @@ def run(command, env={}):
         raise Exception("Non zero return code: {}".format(process.returncode))
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
+    parser = argparse.ArgumentParser(description='Voxelwise Encoding BIDS App.')
     parser.add_argument('bids_dir', help='The directory with the input dataset '
                         'formatted according to the BIDS standard.')
     parser.add_argument('output_dir', help='The directory where the output files '
@@ -90,20 +101,41 @@ if __name__=='__main__':
     parser.add_argument('-s', '--ses', help='The label of the session to use. '
                         'Corresponds to label in ses-<label> in the BIDS directory.')
     parser.add_argument('-v', '--version', action='version',
-                        version='BIDS-App example version {}'.format(__version__))
+                        version='BIDS-App version {}'.format(__version__))
     parser.add_argument('-r', '--recording', help='The label of the stimulus recording to use. '
                         'Corresponds to label in recording-<label> of the stimulus.')
-
-    # TODO: make list of arguments to be included
-
-    # split
-    # what to save
-
+    parser.add_argument('--detrend', help='Whether to linearly detrend fMRI data voxel-wise before training encoding models. Default is False.',
+                        default=False, action='store_true')
+    parser.add_argument('--standardize', help='How to voxel-wise standardize'
+                        ' fMRI data before training encoding models. Default'
+                        ' is no standardization, options are zscore for '
+                        'z-scoring and psc for computing percent signal change.', default=False)
+    parser.add_argument('--preprocessing-config', help='Path to the preprocessing config file in JSON format. '
+                        'Parameters in this file will be supplied as keyword arguments to the make_X_Y function.')
+    parser.add_argument('--encoding-config', help='Path to the encoding config file in JSON format. '
+                        'Parameters in this file will be supplied as keyword arguments to the get_ridge_plus_scores function.')
+    parser.add_argument('--identifier', help='Identifier to be included in the filenames for the encoding model output.'
+                        'Use this to differentiate different preprocessing steps or hyperparameters.')
+    parser.add_argument('--log', help='Save preprocessing and model configuration together with model output.', default=False, action='store_true')
 
     args = parser.parse_args()
 
     if not args.skip_bids_validator:
         run('bids-validator %s'%args.bids_dir)
+
+    preprocess_kwargs = {}    
+    if args.preprocessing_config:
+        with open(args.preprocessing_config, 'r') as fl:
+            preprocess_kwargs = json.load(fl)
+
+    encoding_kwargs = {} 
+    if args.encoding_config:
+        with open(args.encoding_config, 'r') as fl:
+            encoding_kwargs = json.load(fl)
+
+    identifier = '' 
+    if args.identifier:
+        identifier = '_' + str(args.identifier)
 
     subjects_to_analyze = []
     # only for a subset of subjects
@@ -155,11 +187,11 @@ if __name__=='__main__':
                 mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
             elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
                 mask = os.path.join(masks_path, 'group_mask.nii.gz')
-
+        bold_prep_kwargs = {'mask': mask, 'standardize': args['standardize'], 'detrend': args['detrend']}
         # do BOLD preprocessing
         preprocessed_data = []
         for bold_file in bold_files:
-            preprocessed_data.append(preprocess_bold_fmri(bold_file, mask=mask))
+            preprocessed_data.append(preprocess_bold_fmri(bold_file, **bold_prep_kwargs))
 
         # load stimulus
         stim_meta = []
@@ -171,16 +203,20 @@ if __name__=='__main__':
 
         start_times = [st_meta['StartTime'] for st_meta in stim_meta]
         stim_TR = 1 / stim_meta[0]['SamplingFrequency']
-        # add parameters from args
-        stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, fill_value=0.)
 
-        # FIXME: change from hard-coded to args
-        alphas = [1e-3, 1e-1, 1, 1e2, 1e3, 1e5]
-        ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, alphas=alphas)
-        # TODO: use more args in names
-        joblib.dump(ridges, os.path.join(args.output_dir, 'sub-{}_ridges.pkl'.format(subject_label)))
+        stimuli, preprocessed_data = make_X_Y(
+            stimuli, preprocessed_data, task_meta['RepetitionTime'],
+            stim_TR, start_times=start_times, **preprocess_kwargs)
+
+        ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, **encoding_kwargs)
+
+        filename_output = create_output_filename_from_args(subject_label, **vars(args))
+        joblib.dump(ridges, os.path.join(args.output_dir, '{0}_{1}ridges.pkl'.format(filename_output, identifier)))
         if mask:
             scores_bold = unmask(scores, mask)
         else:
             scores_bold = new_img_like(bold_files[0], scores)
-        save(scores_bold, os.path.join(args.output_dir, 'sub-{}_scores.nii.gz'.format(subject_label)))
+        save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
+        if args['log']:
+            with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+'):
+                json.dump({'bold_preprocessing': bold_prep_kwargs, 'stimulus_preprocessing': preprocess_kwargs, 'encoding': encoding_kwargs}, fl)
