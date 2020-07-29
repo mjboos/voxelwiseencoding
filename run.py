@@ -172,7 +172,7 @@ if __name__=='__main__':
         start_times = [st_meta['StartTime'] for st_meta in stim_meta]
         stim_TR = 1 / stim_meta[0]['SamplingFrequency']
         # add parameters from args
-        stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, filler_value=0.)
+        stimuli, preprocessed_data = make_X_Y(stimuli, preprocessed_data, start_times=start_times, TR=task_meta['RepetitionTime'], stim_TR=stim_TR, fill_value=0.)
 
         # FIXME: change from hard-coded to args
         alphas = [1e-3, 1e-1, 1, 1e2, 1e3, 1e5]

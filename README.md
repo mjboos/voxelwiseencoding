@@ -1,5 +1,6 @@
-## Voxelwise encoding BIDS App
+## Voxelwise Encoding BIDS App
 
+This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html)).
 
 For more information about the specification of BIDS Apps see [here](https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/).
 
@@ -63,8 +64,3 @@ can be run:
 		/bids_dataset /outputs group
 
 ### Special considerations
-Describe whether your app has any special requirements. For example:
-
-- Multiple map reduce steps (participant, group, participant2, group2 etc.)
-- Unusual memory requirements
-- etc.
