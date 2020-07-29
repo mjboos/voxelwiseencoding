@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.metrics import r2_score
+from sklearn.model_selection import KFold
 
 __all__ = ['get_ridge_plus_scores', 'ridge_gridsearch_per_target']
 
@@ -53,7 +54,6 @@ def ridge_gridsearch_per_target(X, y, alphas, n_splits=7, **kwargs):
     determined by KFold cross-validation
     '''
     from sklearn.linear_model import Ridge
-    from sklearn.model_selection import KFold
     from sklearn.metrics import mean_squared_error
     cv_results = {'alphas': []}
     cv = KFold(n_splits=n_splits)
