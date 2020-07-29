@@ -6,6 +6,7 @@ RUN apt-get update && \
     pip3 install nibabel==2.0 && \
     apt-get remove -y python3-pip && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    pip3 install -r requirements.txt
 
 ENV PYTHONPATH=""
 

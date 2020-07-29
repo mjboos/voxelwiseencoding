@@ -1,20 +1,13 @@
 ## Voxelwise Encoding BIDS App
 
 This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html)).
-
 For more information about the specification of BIDS Apps see [here](https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/).
+For auditory stimuli [this](https://github.com/mjboos/audio2bidsstim/) module can help you convert your wav file to a BIDS stimulus representation.
 
 ### Description
 
-TODO
+This app allows you to train voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. To specify parameters for the processing of the stimulus (e.g.lagging and offsetting relative to fMRI), you can specify parameters that are supplied to `make_X_Y` in the `preprocessing` module as a JSON file. Similarly you can specify parameters to be supplied to `get_ridge_plus_scores` in the `encoding` module as a JSON as well.
 
-### Documentation
-
-TODO
-
-### How to report errors
-
-### Acknowledgments
 
 ### Usage
 
