@@ -1,16 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 import numpy as np
-import os
-import sys
-from os.path import join
-import glob
-from sklearn.preprocessing import StandardScaler
-from pandas import read_csv
-import joblib
-from skimage.util.shape import view_as_windows
-from sklearn.linear_model import RidgeCV
-from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score
 
 __all__ = ['get_ridge_plus_scores', 'ridge_gridsearch_per_target']
@@ -31,7 +20,7 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, **kwargs):
 
     Returns
     -------
-    tuple of n_splits RidgeCV estimators trained on training folds
+    tuple of n_splits Ridge estimators trained on training folds
     and scores for all concatenated out-of-fold predictions'''
     if scorer is None:
         scorer = lambda x, y : r2_score(x, y, multioutput='raw_values')

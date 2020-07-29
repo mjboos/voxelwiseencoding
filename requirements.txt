@@ -1,0 +1,8 @@
+nibabel
+numpy
+glob
+json
+joblib
+nilearn
+sklearn
+skimage
