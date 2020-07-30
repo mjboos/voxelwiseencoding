@@ -1,15 +1,25 @@
 ![Python package](https://github.com/mjboos/voxelwiseencoding/workflows/Python%20package/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Voxelwise Encoding BIDS App
 
 This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html)).
 For more information about the specification of BIDS Apps see [here](https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/).
 For auditory stimuli [this](https://github.com/mjboos/audio2bidsstim/) module can help you convert your wav file to a BIDS stimulus representation.
+If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running `python setup.py` or using pip to install it.
 
 ### Description
 
 This app allows you to train voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. To specify parameters for the processing of the stimulus (e.g.lagging and offsetting relative to fMRI), you can specify parameters that are supplied to `make_X_Y` in the `preprocessing` module as a JSON file. Similarly you can specify parameters to be supplied to `get_ridge_plus_scores` in the `encoding` module as a JSON as well.
+Masking is done by default, by checking for masks in `output_dir/masks/` that are either named `sub-PARTICIPANT_LABEL_mask.nii.gz` (where PARTICIPANT_LABEL is the label provided by the user) or that are named `group_mask.nii.gz`. To disable masking call with the lag `--no-masking`.
 
+### Documentation
+
+For further documentation consult the "Usage" section or the documentation in `voxelwiseencoding/preprocessing.py` and `voxelwiseencoding/encoding.py`.
+
+### How to report errors
+
+If you encounter errors with this code or have any questions about its uage, please open an issue on the Github repository [here](https://github.com/mjboos/voxelwiseencoding/).
 
 ### Usage
 
@@ -22,7 +32,7 @@ This App has the following command line arguments:
               [-r RECORDING] [--detrend] [--standardize STANDARDIZE]
               [--preprocessing-config PREPROCESSING_CONFIG]
               [--encoding-config ENCODING_CONFIG] [--identifier IDENTIFIER]
-              [--log]
+              [--no-masking] [--log]
               bids_dir output_dir
 
 Voxelwise Encoding BIDS App.
@@ -80,8 +90,9 @@ optional arguments:
                         Identifier to be included in the filenames for the
                         encoding model output.Use this to differentiate
                         different preprocessing steps or hyperparameters.
+  --no-masking          Flag to disable masking. This will lead to many non-
+                        brain voxels being included.
   --log                 Save preprocessing and model configuration together
                         with model output.
 </pre>
-
 ### Special considerations

@@ -116,6 +116,8 @@ if __name__=='__main__':
                         'Parameters in this file will be supplied as keyword arguments to the get_ridge_plus_scores function.')
     parser.add_argument('--identifier', help='Identifier to be included in the filenames for the encoding model output.'
                         'Use this to differentiate different preprocessing steps or hyperparameters.')
+    parser.add_argument('--no-masking', help='Flag to disable masking. This will lead to many non-brain voxels being included.',
+                        default=False, action='store_true')
     parser.add_argument('--log', help='Save preprocessing and model configuration together with model output.', default=False, action='store_true')
 
     args = parser.parse_args()
@@ -181,12 +183,13 @@ if __name__=='__main__':
                     ' Stimulus json: {} \n stimulus tsv: {} \n BOLD: {}'.format(stim_json, stim_tsv, bold_files))
 
         mask = None
-        masks_path = os.path.join(args.output_dir, 'masks')
-        if os.path.exists(masks_path):
-            if os.path.exists(os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))):
-                mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
-            elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
-                mask = os.path.join(masks_path, 'group_mask.nii.gz')
+        if not args.no_masking:
+            masks_path = os.path.join(args.output_dir, 'masks')
+            if os.path.exists(masks_path):
+                if os.path.exists(os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))):
+                    mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
+                elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
+                    mask = os.path.join(masks_path, 'group_mask.nii.gz')
         bold_prep_kwargs = {'mask': mask, 'standardize': args['standardize'], 'detrend': args['detrend']}
         # do BOLD preprocessing
         preprocessed_data = []
