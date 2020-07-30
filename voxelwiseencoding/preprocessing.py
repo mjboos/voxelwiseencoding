@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import joblib
 from nilearn.masking import unmask, apply_mask
-from nibabel import save, load
+from nibabel import save, load, Nifti1Image
 from nilearn.signal import clean
 
 __all__ = ['preprocess_bold_fmri', 'get_remove_idx', 'make_X_Y']
@@ -13,7 +13,10 @@ def preprocess_bold_fmri(bold, mask=None, detrend=True, standardize='zscore', **
     if mask:
         data = apply_mask(bold, mask)
     else:
-        data = load(bold).get_data()
+        if not isinstance(bold, Nifti1Image): 
+            data = load(bold).get_data()
+        else:
+            data = bold.get_data()
         data = np.reshape(data, (-1, data.shape[-1])).T
     return clean(data, detrend=detrend, standardize=standardize, **kwargs)
 
