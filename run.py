@@ -67,7 +67,8 @@ def create_bold_glob_from_args(subject_label, **kwargs):
                  'desc-{}'.format(kwargs['desc']) if kwargs['desc'] else None,
                  '*_bold.nii.gz']
     bold_expr = '_'.join([term for term in bold_expr if term])
-    return bold_expr
+    return bold_expr.replace('_*_', '_*')
+
 
 
 def run(command, env={}):
