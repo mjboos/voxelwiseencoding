@@ -29,6 +29,7 @@ def get_remove_idx(lagged_stimulus, remove_nan=True):
     else:
         raise ValueError('remove_nan needs to be either True, False, or a float between 0 and 1.')
 
+
 def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
                              lag_time=6.0, start_time=0., offset_stim=0.,
                              fill_value=np.nan):
@@ -117,7 +118,6 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     if offset_stim > 0:
         stimulus = stimulus[:, :-(offset_TR *stim_samples_per_TR * n_features)]
     return stimulus
-
 
 def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_stim=0., fill_value=np.nan, remove_nans=True):
     '''Creates (lagged) features and fMRI matrices concatenated along runs
@@ -209,3 +209,4 @@ def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_
         lagged_stimuli.append(stimulus)
         aligned_fmri.append(fmri_run)
     return np.vstack(lagged_stimuli), np.vstack(aligned_fmri)
+

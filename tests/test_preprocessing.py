@@ -57,6 +57,7 @@ def test_generate_lagged_stimulus():
     x_lagged = prep.generate_lagged_stimulus(X, Y.shape[0], TR, stim_TR, lag_time=6)
     assert x_lagged[2].max() == 29
 
+
 def test_fmri_preprocessing():
     mask, data, _ = create_test_data()
     bold = prep.preprocess_bold_fmri(data)
