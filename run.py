@@ -206,7 +206,7 @@ if __name__=='__main__':
                     mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
                 elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
                     mask = os.path.join(masks_path, 'group_mask.nii.gz')
-        bold_prep_kwargs = {'mask': mask, 'standardize': args['standardize'], 'detrend': args['detrend']}
+        bold_prep_kwargs = {'mask': mask, 'standardize': args.standardize, 'detrend': args.detrend}
         # do BOLD preprocessing
         preprocessed_data = []
         for bold_file in bold_files:
@@ -236,6 +236,6 @@ if __name__=='__main__':
         else:
             scores_bold = new_img_like(bold_files[0], scores)
         save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
-        if args['log']:
+        if args.log:
             with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+'):
                 json.dump({'bold_preprocessing': bold_prep_kwargs, 'stimulus_preprocessing': preprocess_kwargs, 'encoding': encoding_kwargs}, fl)
