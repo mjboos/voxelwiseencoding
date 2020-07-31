@@ -29,6 +29,96 @@ def get_remove_idx(lagged_stimulus, remove_nan=True):
     else:
         raise ValueError('remove_nan needs to be either True, False, or a float between 0 and 1.')
 
+def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
+                             lag_time=6.0, start_time=0., offset_stim=0.,
+                             fill_value=np.nan):
+    '''Generates a lagged stimulus representation temporally aligned with the fMRI data
+
+    Parameters
+    ----------
+    stimuli : ndarray, stimulus representation of shape (samples, features)
+    fmri_samples : int, samples of corresponding fmri run
+    TR : int, float, repetition time of the fMRI data in seconds
+    stim_TR : int, float, repetition time of the stimulus in seconds
+    lag_time : int, float, optional,
+               lag to introduce for stimuli in seconds,
+               if no lagging should be done set this to TR
+    start_time :  int, float, optional, default 0.
+                  starting time of the stimulus relative to fMRI recordings in seconds
+                  appends fill_value to stimulus representation to match fMRI and stimulus
+    offset_stim : int, float, optional, default 0.
+                  time to offset stimulus relative to fMRI in the lagged stimulus,
+                  i.e. when predicting fmri at time t use only stimulus features
+                  before t-offset_stim. This reduces the number of time points used
+                  in the model.
+    fill_value : int, float, or any valid numpy array element, optional, default np.nan
+                 appends fill_value to stimulus array to account for starting_time
+                 use np.nan here with remove_nans=True to remove fmri/stimulus samples where no stimulus was presented
+
+    Returns
+    -------
+    ndarray of the lagged stimulus of shape (samples, lagged features)
+    '''
+    from skimage.util import view_as_windows
+    # find out temporal alignment
+    stim_samples_per_TR = TR / stim_TR
+    if stim_samples_per_TR < 1:
+        raise ValueError('Stimulus TR is larger than fMRI TR')
+    # check if result is close to an integer
+    if not np.isclose(stim_samples_per_TR, np.round(stim_samples_per_TR)):
+        warnings.warn('Stimulus timing and fMRI timing do not align. '
+        'Stimulus samples per fMRI samples: {0} for stimulus TR {1} and fMRI TR {2}. '
+        'Proceeds by rounding stimulus samples '
+        'per TR.'.format(stim_samples_per_TR, stim_TR, TR), RuntimeWarning)
+    stim_samples_per_TR = int(np.round(stim_samples_per_TR))
+    # check if lag time is multiple of TR
+    if not np.isclose(lag_time / TR, np.round(lag_time / TR)):
+        raise ValueError('lag_time should be a multiple of TR so '
+                'that stimulus/fMRI alignment does not change.')
+    if lag_time == TR:
+            warnings.warn('lag_time is equal to TR, no stimulus lagging will be done.', RuntimeWarning)
+    lag_TR = int(np.round(lag_time / TR))
+    offset_TR = int(np.round(offset_stim / TR))
+
+    n_features = stimulus.shape[1]
+    n_append = 0
+    n_prepend = 0
+    # check if the stimulus start time is moved w.r.t. fmri
+    n_prepend += int(np.round(start_time / stim_TR))
+    stimulus = np.vstack([np.full((n_prepend, n_features), fill_value), stimulus])
+
+    # make reshapeable by appending filler
+    if stimulus.shape[0] % stim_samples_per_TR > 0:
+        # either remove part of the stimulus (if it is longer than fmri) or append filler
+        if stimulus.shape[0] / stim_samples_per_TR > fmri_samples:
+            stimulus = stimulus[:-(stimulus.shape[0] % stim_samples_per_TR)]
+        else:
+            n_append = stim_samples_per_TR - ((stimulus.shape[0]) % stim_samples_per_TR)
+            stimulus = np.vstack([stimulus, np.full((n_append, n_features), fill_value)])
+
+    # now reshape and lag
+    # TODO: check for memory footprint wrt copying
+    stimulus = np.reshape(stimulus, (-1, stim_samples_per_TR * n_features))
+
+    # check if lagging should be done
+    if lag_time != TR:
+        # account for lagging
+        n_prepend_lag = (lag_TR + offset_TR) - 1
+        # and add filler such that length is the same for fmri
+        n_append_lag = fmri_samples - stimulus.shape[0]
+        stimulus = np.vstack(
+                             [np.full((n_prepend_lag, n_features * stim_samples_per_TR), fill_value),
+                              stimulus,
+                              np.full((n_append_lag, n_features * stim_samples_per_TR), fill_value)])
+        stimulus = np.swapaxes(np.squeeze(view_as_windows(stimulus, ((lag_TR + offset_TR), 1))), 1, 2)
+        stimulus = np.reshape(stimulus, (stimulus.shape[0], -1))
+
+    # remove stimulus representations that are more recent than offset_stim
+    if offset_stim > 0:
+        stimulus = stimulus[:, :-(offset_TR *stim_samples_per_TR * n_features)]
+    return stimulus
+
+
 def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_stim=0., fill_value=np.nan, remove_nans=True):
     '''Creates (lagged) features and fMRI matrices concatenated along runs
 
@@ -90,87 +180,32 @@ def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_
     if len(stimuli) != len(fmri):
         raise ValueError('Stimulus and fMRI need to have the same number of runs. '
         'Instead fMRI has {} and stimulus {} runs.'.format(len(fmri), len(stimuli)))
-    # find out temporal alignment
-    stim_samples_per_TR = TR / stim_TR
-    if stim_samples_per_TR < 1:
-        raise ValueError('Stimulus TR is larger than fMRI TR')
-    # check if result is close to an integer
-    if not np.isclose(stim_samples_per_TR, np.round(stim_samples_per_TR)):
-        warnings.warn('Stimulus timing and fMRI timing do not align. '
-        'Stimulus samples per fMRI samples: {0} for stimulus TR {1} and fMRI TR {2}. '
-        'Proceeds by rounding stimulus samples '
-        'per TR.'.format(stim_samples_per_TR, stim_TR, TR), RuntimeWarning)
-    stim_samples_per_TR = int(np.round(stim_samples_per_TR))
-    # check if lag time is multiple of TR
-    if not np.isclose(lag_time / TR, np.round(lag_time / TR)):
-        raise ValueError('lag_time should be a multiple of TR so '
-                'that stimulus/fMRI alignment does not change.')
-    if lag_time == TR:
-            warnings.warn('lag_time is equal to TR, no stimulus lagging will be done.', RuntimeWarning)
     n_features = stimuli[0].shape[1]
     if not np.all(np.array([stim.shape[1] for stim in stimuli]) == n_features):
         raise ValueError('Stimulus has different number of features per run.')
 
+    lagged_stimuli = []
+    aligned_fmri = []
+    for i, (stimulus, fmri_run) in enumerate(zip(stimuli, fmri)):
+        stimulus = generate_lagged_stimulus(
+            stimulus, fmri_run.shape[0], TR, stim_TR, lag_time=lag_time,
+            start_time=start_times[i] if start_times else 0.,
+            offset_stim=offset_stim, fill_value=fill_value)
+        # remove nans in stim/fmri here
+        if remove_nans:
+            remove_idx = get_remove_idx(stimulus, remove_nans)
+            stimulus = np.delete(stimulus, remove_idx, axis=0)
+            fmri_run = np.delete(fmri_run, remove_idx, axis=0)
 
-    lag_TR = int(np.round(lag_time / TR))
-    offset_TR = int(np.round(offset_stim / TR))
-    # append filler values before lagging
-    for i in range(len(stimuli)):
-        n_append = 0
-        n_prepend = 0
-        # check if the stimulus start time is moved w.r.t. fmri
-        if start_times:
-            n_prepend += int(np.round(start_times[i] / stim_TR))
-            stimuli[i] = np.vstack(
-                    [np.full((n_prepend, n_features), fill_value),
-                     stimuli[i]])
-        # make reshapeable by appending filler
-        if (stimuli[i].shape[0]) % stim_samples_per_TR > 0:
-            # either remove part of the stimulus (if it is longer than fmri) or append filler
-            if stimuli[i].shape[0] / stim_samples_per_TR > fmri[i].shape[0]:
-                stimuli[i] = stimuli[i][:-(stimuli[i].shape[0] % stim_samples_per_TR)]
-            else:
-                n_append = stim_samples_per_TR - ((stimuli[i].shape[0]) % stim_samples_per_TR)
-                stimuli[i] = np.vstack([
-                        stimuli[i],
-                        np.full((n_append, n_features), fill_value)])
-        # now reshape and lag
-        # TODO: check for memory footprint wrt copying
-        stimuli[i] = np.reshape(stimuli[i], (-1, stim_samples_per_TR * n_features))
-
-        # check if lagging should be done
-        if lag_time != TR:
-            # account for lagging
-            n_prepend_lag = (lag_TR + offset_TR) - 1
-            # and add filler such that length is the same for fmri
-            n_append_lag = fmri[i].shape[0] - stimuli[i].shape[0]
-            stimuli[i] = np.vstack(
-                    [np.full((n_prepend_lag, n_features * stim_samples_per_TR), fill_value),
-                    stimuli[i],
-                    np.full((n_append_lag, n_features * stim_samples_per_TR), fill_value)])
-            stimuli[i] = np.swapaxes(np.squeeze(view_as_windows(stimuli[i], ((lag_TR + offset_TR), 1))), 1, 2)
-            stimuli[i] = np.reshape(stimuli[i], (stimuli[i].shape[0], -1))
-
-    # remove stimulus representations that are more recent than offset_stim
-    if offset_stim > 0:
-        for i in range(len(stimuli)):
-            stimuli[i] = stimuli[i][:, :-(offset_TR *stim_samples_per_TR * n_features)]
-
-    # remove nans in stim/fmri here
-    if remove_nans:
-        for i in range(len(stimuli)):
-            remove_idx = get_remove_idx(stimuli[i], remove_nans)
-            stimuli[i] = np.delete(stimuli[i], remove_idx, axis=0)
-            fmri[i] = np.delete(fmri[i], remove_idx, axis=0)
-
-    # remove fmri samples recorded after stimulus has ended
-    for i in range(len(stimuli)):
-        if fmri[i].shape[0] != stimuli[i].shape[0]:
+        # remove fmri samples recorded after stimulus has ended
+        if fmri_run.shape[0] != stimulus.shape[0]:
             warnings.warn('fMRI data and stimulus samples differ. '
             'Removing additional fMRI samples. This could mean that you recorded '
             'long after stimulus ended or that something went wrong in the '
             'preprocessing. fMRI: {}s stimulus: {}s'.format(
-                TR*fmri[i].shape[0], TR*stimuli[i].shape[0]), RuntimeWarning)
-            if fmri[i].shape[0] > stimuli[i].shape[0]:
-                fmri[i] = fmri[i][:-(fmri[i].shape[0]-stimuli[i].shape[0])]
-    return np.vstack(stimuli), np.vstack(fmri)
+                TR*fmri_run.shape[0], TR*stimulus.shape[0]), RuntimeWarning)
+            if fmri_run.shape[0] > stimulus.shape[0]:
+                fmri_run = fmri_run[:-(fmri_run.shape[0]-stimulus.shape[0])]
+        lagged_stimuli.append(stimulus)
+        aligned_fmri.append(fmri_run)
+    return np.vstack(lagged_stimuli), np.vstack(aligned_fmri)
