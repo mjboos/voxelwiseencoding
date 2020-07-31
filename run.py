@@ -27,7 +27,8 @@ def create_stim_filename_from_args(subject_label, **kwargs):
                  'recording-{}'.format(kwargs['recording']) if kwargs['recording'] else None,
                  'stim']
     stim_expr = '_'.join([term for term in stim_expr if term])
-    return stim_expr
+    # TODO: change hacky way to glob 
+    return stim_expr.replace('_*_', '_*')
 
 def create_output_filename_from_args(subject_label, **kwargs):
     '''Creates filename for the model output'''
