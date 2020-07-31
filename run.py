@@ -55,7 +55,10 @@ def get_func_bold_directory(subject_label, **kwargs):
     bold_folder = [kwargs['bids_dir'], 'sub-{}'.format(subject_label),
                  'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
                  'func']
-    bold_folder = os.path.join(*[term for term in bold_folder if term])
+    bold_folder_name = os.path.join(*[term for term in bold_folder if term])
+    # check if path exists, since func can be missing for derivatives
+    if not os.path.exists(bold_folder_name):
+        bold_folder_name = os.path.join(*[term for term in bold_folder[:-1] if term])
     return bold_folder
 
 
