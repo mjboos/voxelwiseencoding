@@ -11,7 +11,8 @@ import json
 import joblib
 import numpy as np
 from nilearn.masking import unmask
-from nilearn.image import new_img_like
+from nilearn.image import new_img_like, index_img
+from nilearn.masking import compute_epi_mask
 from nibabel import save
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -209,6 +210,8 @@ if __name__=='__main__':
                     mask = os.path.join(masks_path, 'sub-{}_mask.nii.gz'.format(subject_label))
                 elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
                     mask = os.path.join(masks_path, 'group_mask.nii.gz')
+            else:
+                mask = compute_epi_mask(bold_files[0])
         bold_prep_kwargs = {'mask': mask, 'standardize': args.standardize, 'detrend': args.detrend}
         # do BOLD preprocessing
         preprocessed_data = []
@@ -236,9 +239,8 @@ if __name__=='__main__':
         joblib.dump(ridges, os.path.join(args.output_dir, '{0}_{1}ridges.pkl'.format(filename_output, identifier)))
         if mask:
             scores_bold = unmask(scores, mask)
-        else:
-            scores_bold = new_img_like(bold_files[0], scores)
         save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
+        # TODO: mention computed epi mask
         if args.log:
             with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+'):
                 json.dump({'bold_preprocessing': bold_prep_kwargs, 'stimulus_preprocessing': preprocess_kwargs, 'encoding': encoding_kwargs}, fl)
