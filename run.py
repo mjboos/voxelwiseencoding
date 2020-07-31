@@ -39,6 +39,14 @@ def create_output_filename_from_args(subject_label, **kwargs):
     output_expr = '_'.join([term for term in output_expr if term])
     return output_expr
 
+#TODO: make globbable for different runs
+def create_metadata_filename_from_args(subject_label, **kwargs):
+    '''Creates filename for task metadata'''
+    metadata_expr = ['sub-{}'.format(subject_label),
+                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
+                 'bold.json']
+    metadata_expr = '_'.join([term for term in metadata_expr if term])
+    return metadata_expr
 
 
 def get_func_bold_directory(subject_label, **kwargs):
@@ -147,15 +155,21 @@ if __name__=='__main__':
     else:
         subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
         subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
-
-    with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
-        task_meta = json.load(fl)
-
+    
     for subject_label in subjects_to_analyze:
         bold_folder = get_func_bold_directory(subject_label, **vars(args))
         bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
         bold_files = sorted(glob(os.path.join(bold_folder, bold_glob)))
         stim_glob = create_stim_filename_from_args(subject_label, **vars(args))
+
+        # subject specific metadata takes precedence over other metadata
+        try:
+            with open(os.path.join(bold_folder, create_metadata_filename_from_args(subject_label, **vars(args))), 'r') as fl:
+                task_meta = json.load(fl)
+        except FileNotFoundError:
+            with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
+                task_meta = json.load(fl)
+
 
         # first check if there exist subject specific stimulus files
         stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv.gz'])))
