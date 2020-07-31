@@ -59,7 +59,7 @@ def get_func_bold_directory(subject_label, **kwargs):
     # check if path exists, since func can be missing for derivatives
     if not os.path.exists(bold_folder_name):
         bold_folder_name = os.path.join(*[term for term in bold_folder[:-1] if term])
-    return bold_folder
+    return bold_folder_name
 
 
 def create_bold_glob_from_args(subject_label, **kwargs):
