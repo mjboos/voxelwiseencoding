@@ -14,6 +14,4 @@ def test_encoding():
     X, y  = create_encoding_test_data()
     ridges, scores = enc.get_ridge_plus_scores(X, y, n_splits=2)
     assert len(ridges) == 2
-    assert scores.shape == (27,)
-    print(ridges[0].alpha)
-    print(ridges[1].alpha)
+    assert scores.shape == (27, 2)
