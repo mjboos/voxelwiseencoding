@@ -5,6 +5,14 @@ from sklearn.model_selection import KFold
 
 __all__ = ['get_ridge_plus_scores', 'ridge_gridsearch_per_target']
 
+def product_moment_corr(x,y):
+    from sklearn.preprocessing import StandardScaler
+    x = StandardScaler().fit_transform(x)
+    y = StandardScaler().fit_transform(y)
+    n = x.shape[0]
+    r = (1/(n-1))*(x*y).sum(axis=0)
+    return r
+
 def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_selection=True, **kwargs):
     '''Returns ridge regressions trained in a cross-validation on n_splits of the data and scores on the left-out folds
 
@@ -16,7 +24,7 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_sele
              Regularization parameters to be used for Ridge regression
     n_splits : int, optional
     scorer : None or any sci-kit learn compatible scoring function, optional
-             default uses r2_score
+             default uses product moment correlation
     voxel_selection : bool, optional, default True
                       Whether to only use voxels with variance larger than zero.
                       This will set scores for these voxels to zero.
@@ -27,28 +35,29 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_sele
     tuple of n_splits Ridge estimators trained on training folds
     and scores for all concatenated out-of-fold predictions'''
     if scorer is None:
-        scorer = lambda x, y : r2_score(x, y, multioutput='raw_values')
+        scorer = product_moment_corr
     kfold = KFold(n_splits=n_splits)
     if alphas is None:
         alphas = [1000]
     ridges = []
     predictions = []
     ridges = []
+    score_list = []
     # TODO: likely memory inefficient, should be changed
     if voxel_selection:
         voxel_var = np.var(y, axis=0)
         y = y[:, voxel_var > 0.]
     for train, test in kfold.split(X, y):
         ridges.append(ridge_gridsearch_per_target(X[train], y[train], alphas, **kwargs))
-        predictions.append(ridges[-1].predict(X[test]))
-    if voxel_selection:
-        scores = np.zeros_like(voxel_var)
-        scores[voxel_var > 0.] =  scorer(y, np.vstack(predictions))
-    else:
-        scores = scorer(y, np.vstack(predictions))
-    return ridges, scores
+        if voxel_selection:
+            scores = np.zeros_like(voxel_var)
+            scores[voxel_var > 0.] =  scorer(y[test], ridges[-1].predict(X[test]))
+        else:
+            scores = scorer(y[test], ridges[-1].predict(X[test]))
+        score_list.append(scores[:, None])
+    return ridges, np.concatenate(scores, axis=-1)
 
-def ridge_gridsearch_per_target(X, y, alphas, n_splits=7, **kwargs):
+def ridge_gridsearch_per_target(X, y, alphas, n_splits=5, **kwargs):
     '''Runs Ridge gridsearch across alphas for each target in y
 
     Parameters
