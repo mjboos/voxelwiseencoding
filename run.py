@@ -11,7 +11,7 @@ import json
 import joblib
 import numpy as np
 from nilearn.masking import unmask
-from nilearn.image import new_img_like, index_img
+from nilearn.image import new_img_like, concat_imgs
 from nilearn.masking import compute_epi_mask
 from nibabel import save
 
@@ -238,7 +238,7 @@ if __name__=='__main__':
         filename_output = create_output_filename_from_args(subject_label, **vars(args))
         joblib.dump(ridges, os.path.join(args.output_dir, '{0}_{1}ridges.pkl'.format(filename_output, identifier)))
         if mask:
-            scores_bold = unmask(scores, mask)
+            scores_bold = concat_imgs([unmask(scores_fold, mask) for scores_fold in scores.T])
         save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
         # TODO: mention computed epi mask
         if args.log:
