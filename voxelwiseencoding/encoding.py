@@ -40,8 +40,6 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_sele
     if alphas is None:
         alphas = [1000]
     ridges = []
-    predictions = []
-    ridges = []
     score_list = []
     # TODO: likely memory inefficient, should be changed
     if voxel_selection:
@@ -55,7 +53,7 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_sele
         else:
             scores = scorer(y[test], ridges[-1].predict(X[test]))
         score_list.append(scores[:, None])
-    return ridges, np.concatenate(scores, axis=-1)
+    return ridges, np.concatenate(score_list, axis=-1)
 
 def ridge_gridsearch_per_target(X, y, alphas, n_splits=5, **kwargs):
     '''Runs Ridge gridsearch across alphas for each target in y
