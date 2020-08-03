@@ -240,7 +240,9 @@ if __name__=='__main__':
         if mask:
             scores_bold = concat_imgs([unmask(scores_fold, mask) for scores_fold in scores.T])
         save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
-        # TODO: mention computed epi mask
         if args.log:
-            with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+'):
+            # check if we computed an epi mask
+            if not isinstance(bold_prep_kwargs['mask'], str):
+                bold_prep_kwargs['mask'] = 'epi mask'
+            with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+') as fl:
                 json.dump({'bold_preprocessing': bold_prep_kwargs, 'stimulus_preprocessing': preprocess_kwargs, 'encoding': encoding_kwargs}, fl)
