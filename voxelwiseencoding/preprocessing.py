@@ -101,6 +101,13 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     # TODO: check for memory footprint wrt copying
     stimulus = np.reshape(stimulus, (-1, stim_samples_per_TR * n_features))
 
+    # check if stimulus is longer than fmri and remove part of the stimulus
+    if stimulus.shape[0] > fmri_samples:
+        warnings.warn('Stimulus ({0}) is longer than recorded fMRI '
+                      '({1}). Removing last part of stimulus.'.format(stimulus.shape[0]*TR, fmri_samples*TR))
+        stimulus = stimulus[:fmri_samples]
+
+
     # check if lagging should be done
     if lag_time != TR:
         # account for lagging
