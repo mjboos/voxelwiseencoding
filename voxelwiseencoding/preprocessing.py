@@ -41,9 +41,9 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     fmri_samples : int, samples of corresponding fmri run
     TR : int, float, repetition time of the fMRI data in seconds
     stim_TR : int, float, repetition time of the stimulus in seconds
-    lag_time : int, float, optional,
+    lag_time : int, float, or None, optional,
                lag to introduce for stimuli in seconds,
-               if no lagging should be done set this to TR
+               if no lagging should be done set this to TR or None
     start_time :  int, float, optional, default 0.
                   starting time of the stimulus relative to fMRI recordings in seconds
                   appends fill_value to stimulus representation to match fMRI and stimulus
@@ -72,6 +72,8 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
         'Proceeds by rounding stimulus samples '
         'per TR.'.format(stim_samples_per_TR, stim_TR, TR), RuntimeWarning)
     stim_samples_per_TR = int(np.round(stim_samples_per_TR))
+    if lag_time is None:
+        lag_time = TR
     # check if lag time is multiple of TR
     if not np.isclose(lag_time / TR, np.round(lag_time / TR)):
         raise ValueError('lag_time should be a multiple of TR so '
