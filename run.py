@@ -139,17 +139,17 @@ if __name__=='__main__':
     if not args.skip_bids_validator:
         run('bids-validator %s'%args.bids_dir)
 
-    preprocess_kwargs = {}    
+    preprocess_kwargs = {}
     if args.preprocessing_config:
         with open(args.preprocessing_config, 'r') as fl:
             preprocess_kwargs = json.load(fl)
 
-    encoding_kwargs = {} 
+    encoding_kwargs = {}
     if args.encoding_config:
         with open(args.encoding_config, 'r') as fl:
             encoding_kwargs = json.load(fl)
 
-    identifier = '' 
+    identifier = ''
     if args.identifier:
         identifier = '_' + str(args.identifier)
 
@@ -161,7 +161,6 @@ if __name__=='__main__':
     else:
         subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
         subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
-    
     for subject_label in subjects_to_analyze:
         bold_folder = get_func_bold_directory(subject_label, **vars(args))
         bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
@@ -196,7 +195,8 @@ if __name__=='__main__':
         stim_tsv = sorted(stim_tsv)
         stim_json = sorted(glob(os.path.join(bold_folder, '.'.join([stim_glob, 'json']))))
         if not stim_json:
-            raise ValueError('No stimulus json files found! [mention more]')
+            raise ValueError('No stimulus json files found!'
+                             'These should be in the same folder as the functional data.')
 
         if not (len(stim_tsv) == len(stim_json) and len(stim_json) == len(bold_files)):
             raise ValueError('Number of stimulus tsv, stimulus json, and BOLD files differ.'
@@ -232,7 +232,6 @@ if __name__=='__main__':
         stimuli, preprocessed_data = make_X_Y(
             stimuli, preprocessed_data, task_meta['RepetitionTime'],
             stim_TR, start_times=start_times, **preprocess_kwargs)
-
         ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, **encoding_kwargs)
 
         filename_output = create_output_filename_from_args(subject_label, **vars(args))
