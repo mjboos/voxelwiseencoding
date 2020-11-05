@@ -120,7 +120,11 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
                              [np.full((n_prepend_lag, n_features * stim_samples_per_TR), fill_value),
                               stimulus,
                               np.full((n_append_lag, n_features * stim_samples_per_TR), fill_value)])
+        # here we create a stimulus representation that incorporates a time window
+        # i.e. we go from time X features to (time - window_size + 1) X window_size X features
+        # where window size is (lag_TR + offset_TR)
         stimulus = np.swapaxes(np.squeeze(view_as_windows(stimulus, ((lag_TR + offset_TR), 1))), 1, 2)
+        # and here we reshape into (time - window_size + 1) X (window_size * features)
         stimulus = np.reshape(stimulus, (stimulus.shape[0], -1))
 
     # remove stimulus representations that are more recent than offset_stim
