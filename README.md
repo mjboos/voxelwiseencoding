@@ -1,29 +1,32 @@
-![Python package](https://github.com/mjboos/voxelwiseencoding/workflows/Python%20package/badge.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Voxelwise Encoding BIDS App
+# Voxel-wise encoding models for BIDS datasets with naturalistic stimuli
+> This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file.
 
-This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html)).
-For more information about the specification of BIDS Apps see [here](https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/).
-For auditory stimuli [this](https://github.com/mjboos/audio2bidsstim/) module can help you convert your wav file to a BIDS stimulus representation.
-If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running `python setup.py` or using pip to install it.
 
-### Description
+## Install
+
+If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running `python setup.py` or `pip install voxelwiseencoding`.
+You can use the BIDS app either via Docker or directly by calling `run.py`.
+
+## Description
 
 This app allows you to train voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. To specify parameters for the processing of the stimulus (e.g.lagging and offsetting relative to fMRI), you can specify parameters that are supplied to `make_X_Y` in the `preprocessing` module as a JSON file. Similarly you can specify parameters to be supplied to `get_ridge_plus_scores` in the `encoding` module as a JSON as well.
 Masking is done by default, by checking for masks in `output_dir/masks/` that are either named `sub-PARTICIPANT_LABEL_mask.nii.gz` (where PARTICIPANT_LABEL is the label provided by the user) or that are named `group_mask.nii.gz`. To disable masking call with the lag `--no-masking`.
 Voxel-encoding models are trained in a cross-validation scheme: the parameter `n_splits` that is supplied to `get_ridge_plus_scores` via a configuation JSON file determines the number of folds in the cross-validation. Each fold is left out once, while a model is trained (and hyperparameters are tuned) on the remaining folds - model validation is done by voxel-wise [product moment correlation](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient) between the predicted and observed fMRI activity for the left-out fold and saved as a 4D nifti in the output folder (with one image per left-out fold).
 Similarly, for each left-out fold, Ridge regression models (trained on the remaining folds) are saved as a pickle file in the output folder.
 
-### Documentation
 
-For further documentation consult the "Usage" section or the documentation in `voxelwiseencoding/preprocessing.py` and `voxelwiseencoding/encoding.py`.
 
-### How to report errors
+
+## Documentation
+
+[See here](https://mjboos.github.io/voxelwiseencoding) for further documentation about the Python package and consult the "Usage" section about the BIDS app/terminal usage.
+
+## How to report errors
 
 If you encounter errors with this code or have any questions about its uage, please open an issue on the Github repository [here](https://github.com/mjboos/voxelwiseencoding/).
 
-### Usage
+## Usage
 
 run.py /path/to/your/BIDS/dir /output/path --task your_task --ses session --skip_bids_validator --participant_label 01
 
@@ -97,4 +100,3 @@ optional arguments:
   --log                 Save preprocessing and model configuration together
                         with model output.
 </pre>
-### Special considerations
