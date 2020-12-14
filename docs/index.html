@@ -1,13 +1,13 @@
 ---
 
-title: Voxel-wise encoding models for BIDS datasets with naturalistic stimuli
+title: Title
 
 
 keywords: fastai
 sidebar: home_sidebar
 
-summary: "Summary description here."
-description: "Summary description here."
+
+
 nb_path: "index.ipynb"
 ---
 <!--
@@ -31,70 +31,112 @@ nb_path: "index.ipynb"
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This file will become your README and also the index of your documentation.</p>
+<p><img src="https://github.com/mjboos/voxelwiseencoding/workflows/Python%20package/badge.svg" alt="Python package">
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
+<h1 id="Voxel-wise-encoding-models-for-BIDS-datasets-with-naturalistic-stimuli">Voxel-wise encoding models for BIDS datasets with naturalistic stimuli<a class="anchor-link" href="#Voxel-wise-encoding-models-for-BIDS-datasets-with-naturalistic-stimuli"> </a></h1><blockquote><p>This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file (see specification <a href="https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/06-physiological-and-other-continuous-recordings.html">here</a>).
+For more information about the specification of BIDS Apps see <a href="https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/">here</a>.
+For auditory stimuli <a href="https://github.com/mjboos/audio2bidsstim/">this</a> module can help you convert your wav file to a BIDS stimulus representation.</p>
+</blockquote>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Install">Install<a class="anchor-link" href="#Install"> </a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><code>pip install voxelwiseencoding</code></p>
+<h2 id="Install">Install<a class="anchor-link" href="#Install"> </a></h2><p>If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running <code>python setup.py</code> or <code>pip install voxelwiseencoding</code>.
+You can use the BIDS app either via Docker or directly by calling <a href="/voxelwiseencoding/process_bids.html#run.py"><code>run.py</code></a>.</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="How-to-use">How to use<a class="anchor-link" href="#How-to-use"> </a></h2>
+<h2 id="Description">Description<a class="anchor-link" href="#Description"> </a></h2><p>This app allows you to train voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. To specify parameters for the processing of the stimulus (e.g.lagging and offsetting relative to fMRI), you can specify parameters that are supplied to <a href="/voxelwiseencoding/preprocessing.html#make_X_Y"><code>make_X_Y</code></a> in the <a href="/voxelwiseencoding/preprocessing.html"><code>preprocessing</code></a> module as a JSON file. Similarly you can specify parameters to be supplied to <a href="/voxelwiseencoding/encoding.html#get_ridge_plus_scores"><code>get_ridge_plus_scores</code></a> in the <a href="/voxelwiseencoding/encoding.html"><code>encoding</code></a> module as a JSON as well.
+Masking is done by default, by checking for masks in <code>output_dir/masks/</code> that are either named <code>sub-PARTICIPANT_LABEL_mask.nii.gz</code> (where PARTICIPANT_LABEL is the label provided by the user) or that are named <code>group_mask.nii.gz</code>. To disable masking call with the lag <code>--no-masking</code>.
+Voxel-encoding models are trained in a cross-validation scheme: the parameter <code>n_splits</code> that is supplied to <a href="/voxelwiseencoding/encoding.html#get_ridge_plus_scores"><code>get_ridge_plus_scores</code></a> via a configuation JSON file determines the number of folds in the cross-validation. Each fold is left out once, while a model is trained (and hyperparameters are tuned) on the remaining folds - model validation is done by voxel-wise <a href="https://en.wikipedia.org/wiki/Pearson_correlation_coefficient">product moment correlation</a> between the predicted and observed fMRI activity for the left-out fold and saved as a 4D nifti in the output folder (with one image per left-out fold).
+Similarly, for each left-out fold, Ridge regression models (trained on the remaining folds) are saved as a pickle file in the output folder.</p>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Fill me in please! Don't forget code examples:</p>
+<h2 id="Documentation">Documentation<a class="anchor-link" href="#Documentation"> </a></h2><p>For further documentation consult the "Usage" section or in <a href="https://mjboos.github.io/voxelwiseencoding">this</a> documentation.</p>
+<h2 id="How-to-report-errors">How to report errors<a class="anchor-link" href="#How-to-report-errors"> </a></h2><p>If you encounter errors with this code or have any questions about its uage, please open an issue on the Github repository <a href="https://github.com/mjboos/voxelwiseencoding/">here</a>.</p>
+<h2 id="Usage">Usage<a class="anchor-link" href="#Usage"> </a></h2><p>run.py /path/to/your/BIDS/dir /output/path --task your_task --ses session --skip_bids_validator --participant_label 01</p>
+<p>This App has the following command line arguments:</p>
+<pre>usage: run.py [-h]
+              [--participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
+              [--skip_bids_validator] [-d DESC] [-t TASK] [-s SES] [-v]
+              [-r RECORDING] [--detrend] [--standardize STANDARDIZE]
+              [--preprocessing-config PREPROCESSING_CONFIG]
+              [--encoding-config ENCODING_CONFIG] [--identifier IDENTIFIER]
+              [--no-masking] [--log]
+              bids_dir output_dir
 
+Voxelwise Encoding BIDS App.
+
+positional arguments:
+  bids_dir              The directory with the input dataset formatted
+                        according to the BIDS standard.
+  output_dir            The directory where the output files should be stored.
+                        If you want to mask the data please include folder
+                        called masks that contains either subject-specific
+                        NifTI masks named sub-&lt;participant_label&gt;_mask.nii.gz
+                        or a group-level mask named group_mask.nii.gz.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]
+                        The label(s) of the participant(s) that should be
+                        analyzed. The label corresponds to
+                        sub-&lt;participant_label&gt; from the BIDS spec (so it does
+                        not include &quot;sub-&quot;). If this parameter is not provided
+                        all subjects should be analyzed. Multiple participants
+                        can be specified with a space separated list.
+  --skip_bids_validator
+                        Whether or not to perform BIDS dataset validation
+  -d DESC, --desc DESC  The label of the preprocessed data to use. Corresponds
+                        to label in desc-&lt;label&gt; in the naming of the BOLD
+                        NifTIs. If not provided, assumes no derivative label
+                        is used.
+  -t TASK, --task TASK  The task-label to use for training the voxel-wise
+                        encoding model. Corresponds to label in task-&lt;label&gt;
+                        in BIDS naming.
+  -s SES, --ses SES     The label of the session to use. Corresponds to label
+                        in ses-&lt;label&gt; in the BIDS directory.
+  -v, --version         show program&apos;s version number and exit
+  -r RECORDING, --recording RECORDING
+                        The label of the stimulus recording to use.
+                        Corresponds to label in recording-&lt;label&gt; of the
+                        stimulus.
+  --detrend             Whether to linearly detrend fMRI data voxel-wise
+                        before training encoding models. Default is False.
+  --standardize STANDARDIZE
+                        How to voxel-wise standardize fMRI data before
+                        training encoding models. Default is no
+                        standardization, options are zscore for z-scoring and
+                        psc for computing percent signal change.
+  --preprocessing-config PREPROCESSING_CONFIG
+                        Path to the preprocessing config file in JSON format.
+                        Parameters in this file will be supplied as keyword
+                        arguments to the make_X_Y function.
+  --encoding-config ENCODING_CONFIG
+                        Path to the encoding config file in JSON format.
+                        Parameters in this file will be supplied as keyword
+                        arguments to the get_ridge_plus_scores function.
+  --identifier IDENTIFIER
+                        Identifier to be included in the filenames for the
+                        encoding model output.Use this to differentiate
+                        different preprocessing steps or hyperparameters.
+  --no-masking          Flag to disable masking. This will lead to many non-
+                        brain voxels being included.
+  --log                 Save preprocessing and model configuration together
+                        with model output.
+</pre>
 </div>
 </div>
 </div>
-    {% raw %}
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>2</pre>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-    {% endraw %}
-
 </div>
  
 

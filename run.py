@@ -7,71 +7,16 @@ import numpy
 from glob import glob
 from voxelwiseencoding.preprocessing import preprocess_bold_fmri, make_X_Y
 from voxelwiseencoding.encoding import get_ridge_plus_scores
+from voxelwiseencoding.process_bids import run_model_for_subject, create_output_filename_from_args
 import json
 import joblib
 import numpy as np
 from nilearn.masking import unmask
 from nilearn.image import new_img_like, concat_imgs
-from nilearn.masking import compute_epi_mask
 from nibabel import save
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'version')).read()
-
-def create_stim_filename_from_args(subject_label, **kwargs):
-    '''Creates an expression corresponding to the stimulus files. It does not differentiate between json and tsv(.gz) files yet.'''
-    stim_expr = ['sub-{}'.format(subject_label),
-                 'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
-                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
-                 'desc-{}'.format(kwargs['desc']) if kwargs['desc'] else None,
-                 '*',
-                 'recording-{}'.format(kwargs['recording']) if kwargs['recording'] else None,
-                 'stim']
-    stim_expr = '_'.join([term for term in stim_expr if term])
-    # TODO: change hacky way to glob 
-    return stim_expr.replace('_*_', '_*')
-
-def create_output_filename_from_args(subject_label, **kwargs):
-    '''Creates filename for the model output'''
-    output_expr = ['sub-{}'.format(subject_label),
-                 'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
-                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
-                 'desc-{}'.format(kwargs['desc']) if kwargs['desc'] else None,
-                 'recording-{}'.format(kwargs['recording']) if kwargs['recording'] else None]
-    output_expr = '_'.join([term for term in output_expr if term])
-    return output_expr
-
-#TODO: make globbable for different runs
-def create_metadata_filename_from_args(subject_label, **kwargs):
-    '''Creates filename for task metadata'''
-    metadata_expr = ['sub-{}'.format(subject_label),
-                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
-                 'bold.json']
-    metadata_expr = '_'.join([term for term in metadata_expr if term])
-    return metadata_expr
-
-
-def get_func_bold_directory(subject_label, **kwargs):
-    '''Returns a path to the directory in which the bold files of the given subject reside'''
-    bold_folder = [kwargs['bids_dir'], 'sub-{}'.format(subject_label),
-                 'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
-                 'func']
-    bold_folder_name = os.path.join(*[term for term in bold_folder if term])
-    # check if path exists, since func can be missing for derivatives
-    if not os.path.exists(bold_folder_name):
-        bold_folder_name = os.path.join(*[term for term in bold_folder[:-1] if term])
-    return bold_folder_name
-
-
-def create_bold_glob_from_args(subject_label, **kwargs):
-    '''Creates a globbable expression corresponding to the bold NifTIs to be used.'''
-    bold_expr = ['sub-{}'.format(subject_label),
-                 'ses-{}'.format(kwargs['ses']) if kwargs['ses'] else None,
-                 'task-{}'.format(kwargs['task']) if kwargs['task'] else None,
-                 'desc-{}'.format(kwargs['desc']) if kwargs['desc'] else None,
-                 '*_bold*.nii.gz']
-    bold_expr = '_'.join([term for term in bold_expr if term])
-    return bold_expr.replace('_*_', '_*')
 
 
 
@@ -89,6 +34,7 @@ def run(command, env={}):
             break
     if process.returncode != 0:
         raise Exception("Non zero return code: {}".format(process.returncode))
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Voxelwise Encoding BIDS App.')
@@ -162,46 +108,6 @@ if __name__=='__main__':
         subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
         subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
     for subject_label in subjects_to_analyze:
-        bold_folder = get_func_bold_directory(subject_label, **vars(args))
-        bold_glob = create_bold_glob_from_args(subject_label, **vars(args))
-        bold_files = sorted(glob(os.path.join(bold_folder, bold_glob)))
-        stim_glob = create_stim_filename_from_args(subject_label, **vars(args))
-
-        # subject specific metadata takes precedence over other metadata
-        try:
-            with open(os.path.join(bold_folder, create_metadata_filename_from_args(subject_label, **vars(args))), 'r') as fl:
-                task_meta = json.load(fl)
-        except FileNotFoundError:
-            with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(args.task)), 'r') as fl:
-                task_meta = json.load(fl)
-
-
-        # first check if there exist subject specific stimulus files
-        stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv.gz'])))
-        if not stim_tsv:
-            # try to get uncompressed tsv
-            stim_tsv = glob(os.path.join(bold_folder, '.'.join([stim_glob, 'tsv'])))
-            if not stim_tsv:
-                # try to get tsvs in root directory without subject specifier
-                root_glob = '_'.join(stim_glob.split('_')[1:])
-                stim_tsv = glob(os.path.join(args.bids_dir,
-                                                '.'.join([root_glob, 'tsv.gz'])))
-                if not stim_tsv:
-                    # and check again in root for tsv
-                    stim_tsv = glob(os.path.join(args.bids_dir,
-                                                    '.'.join([root_glob, 'tsv'])))
-                    if not stim_tsv:
-                        raise ValueError('No stimulus files found! [Mention naming scheme and location here]')
-        stim_tsv = sorted(stim_tsv)
-        stim_json = sorted(glob(os.path.join(bold_folder, '.'.join([stim_glob, 'json']))))
-        if not stim_json:
-            raise ValueError('No stimulus json files found!'
-                             'These should be in the same folder as the functional data.')
-
-        if not (len(stim_tsv) == len(stim_json) and len(stim_json) == len(bold_files)):
-            raise ValueError('Number of stimulus tsv, stimulus json, and BOLD files differ.'
-                    ' Stimulus json: {} \n stimulus tsv: {} \n BOLD: {}'.format(stim_json, stim_tsv, bold_files))
-
         mask = None
         if not args.no_masking:
             masks_path = os.path.join(args.output_dir, 'masks')
@@ -211,37 +117,27 @@ if __name__=='__main__':
                 elif os.path.exists(os.path.join(masks_path, 'group_mask.nii.gz')):
                     mask = os.path.join(masks_path, 'group_mask.nii.gz')
             else:
-                mask = compute_epi_mask(bold_files[0])
-        bold_prep_kwargs = {'mask': mask, 'standardize': args.standardize, 'detrend': args.detrend}
-        # do BOLD preprocessing
-        preprocessed_data = []
-        for bold_file in bold_files:
-            preprocessed_data.append(preprocess_bold_fmri(bold_file, **bold_prep_kwargs))
-
-        # load stimulus
-        stim_meta = []
-        stimuli = []
-        for tsv_fl, json_fl in zip(stim_tsv, stim_json):
-            with open(json_fl, 'r') as fl:
-                stim_meta.append(json.load(fl))
-            stimuli.append(np.loadtxt(tsv_fl, delimiter='\t'))
-
-        start_times = [st_meta['StartTime'] for st_meta in stim_meta]
-        stim_TR = 1 / stim_meta[0]['SamplingFrequency']
-
-        stimuli, preprocessed_data = make_X_Y(
-            stimuli, preprocessed_data, task_meta['RepetitionTime'],
-            stim_TR, start_times=start_times, **preprocess_kwargs)
-        ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, **encoding_kwargs)
+                mask = 'epi'
+        bold_prep_kwargs = {'standardize': args.standardize, 'detrend': args.detrend}
+        ridges, scores, mask = run_model_for_subject(subject_label, mask=mask,
+                                               bold_prep_kwargs=bold_prep_kwargs,
+                                               encoding_kwargs=encoding_kwargs, **vars(args))
 
         filename_output = create_output_filename_from_args(subject_label, **vars(args))
         joblib.dump(ridges, os.path.join(args.output_dir, '{0}_{1}ridges.pkl'.format(filename_output, identifier)))
+
+        # TODO: test if this works without a mask
         if mask:
             scores_bold = concat_imgs([unmask(scores_fold, mask) for scores_fold in scores.T])
+
         save(scores_bold, os.path.join(args.output_dir, '{0}_{1}scores.nii.gz'.format(filename_output, identifier)))
         if args.log:
             # check if we computed an epi mask
-            if not isinstance(bold_prep_kwargs['mask'], str):
+            if mask=='epi':
                 bold_prep_kwargs['mask'] = 'epi mask'
+            else:
+                bold_prep_kwargs['mask'] = mask
             with open(os.path.join(args.output_dir, '{0}_{1}log_config.json'.format(filename_output, identifier)), 'w+') as fl:
-                json.dump({'bold_preprocessing': bold_prep_kwargs, 'stimulus_preprocessing': preprocess_kwargs, 'encoding': encoding_kwargs}, fl)
+                json.dump({'bold_preprocessing': bold_prep_kwargs,
+                           'stimulus_preprocessing': preprocess_kwargs,
+                           'encoding': encoding_kwargs}, fl)
