@@ -114,7 +114,6 @@ def get_func_bold_directory(subject_label, bids_dir, **kwargs):
         bold_folder_name = os.path.join(*[term for term in bold_folder[:-1] if term])
     return bold_folder_name
 
-
 # Cell
 
 def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None, recording=None, **kwargs):
@@ -181,7 +180,6 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
                 ' Stimulus json: {} \n stimulus tsv: {} \n BOLD: {}'.format(stim_json, stim_tsv, bold_files))
 
     return bold_files, task_meta, stim_tsv, stim_json
-
 
 # Cell
 

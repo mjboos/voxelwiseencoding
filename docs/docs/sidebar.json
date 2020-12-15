@@ -1,7 +1,6 @@
 {
   "voxelwiseencoding": {
     "Overview": "/",
-    "Using this module as a BIDS app": "Voxelwise_Encoding_BIDS.html",
     "Training and validating voxel-wise encoding models": "encoding.html",
     "Preprocessing": "preprocessing.html",
     "Train voxel-wise encoding models on BIDS dataset": "process_bids.html"

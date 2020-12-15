@@ -10,9 +10,6 @@ entries:
       title: Overview
       url: /
     - output: web,pdf
-      title: Using this module as a BIDS app
-      url: Voxelwise_Encoding_BIDS.html
-    - output: web,pdf
       title: Training and validating voxel-wise encoding models
       url: encoding.html
     - output: web,pdf
