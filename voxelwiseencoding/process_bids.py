@@ -185,7 +185,8 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
 
 # Cell
 
-def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=None, encoding_kwargs=None, **kwargs):
+def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=None,
+                          preprocess_kwargs=None, encoding_kwargs=None, **kwargs):
     '''Runs voxel-wise encoding model for a single subject and returns Ridges and scores
 
     Parameters
@@ -193,8 +194,12 @@ def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=N
         subject_label : the BIDS subject label
         bids_dir : the path to the BIDS directory
         mask : path to mask file or 'epi' if an epi mask should be computed from the first BOLD run
-        bold_prep_kwargs : None or dict containing the parameters for preprocessing
-        encoding_kwargs : None or dict containing the parameters for preprocessing
+        bold_prep_kwargs : None or dict containing the parameters for preprocessing the BOLD files
+                           everything that is accepted by nilearn's clean function is an acceptable parameter
+        preprocess_kwargs : None or dict containing the parameters for lagging and aligning fMRI and stimulus
+                            acceptable parameters are ones used by preprocessing.make_X_Y
+        encoding_kwargs : None or dict containing the parameters for the encoding model
+                          acceptable parameters are ones used by encoding.get_ridge_plus_scores
         kwargs : additional BIDS specific arguments such as task, ses, desc, and recording
 
     Returns
