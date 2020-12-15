@@ -15,7 +15,59 @@ Masking is done by default, by checking for masks in `output_dir/masks/` that ar
 Voxel-encoding models are trained in a cross-validation scheme: the parameter `n_splits` that is supplied to `get_ridge_plus_scores` via a configuation JSON file determines the number of folds in the cross-validation. Each fold is left out once, while a model is trained (and hyperparameters are tuned) on the remaining folds - model validation is done by voxel-wise [product moment correlation](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient) between the predicted and observed fMRI activity for the left-out fold and saved as a 4D nifti in the output folder (with one image per left-out fold).
 Similarly, for each left-out fold, Ridge regression models (trained on the remaining folds) are saved as a pickle file in the output folder.
 
+### Example
 
+We are going to use [this](https://openneuro.org/datasets/ds002322/versions/1.0.4) dataset to demonstrate an example workflow using the Python package.
+
+First we need to download the data and extract a stimulus representation:
+
+
+```python
+!aws s3 sync --no-sign-request s3://openneuro.org/ds002322 ds002322-download/
+import json
+# these are the parameters for extracting a Mel spectrogram
+# for computational ease in this example we want 1 sec segments of 31 Mel frequencies with a max frequency of * KHz
+mel_params = {'n_mels': 31, 'sr': 16000, 'hop_length': 16000, 'n_fft': 16000, 'fmax': 8000}
+with open('config.json', 'w+') as fl:
+    json.dump(mel_params, fl)
+
+!git clone https://github.com/mjboos/audio2bidsstim/
+!pip install -r audio2bidsstim/requirements.txt
+!python audio2bidsstim/wav_files_to_bids_tsv.py ds002322-download/stimuli/DownTheRabbitHoleFinal_mono_exp120_NR16_pad.wav -c config.json
+```
+
+We then need to copy the extracted stimulus representation into the BIDS folder.
+
+```python
+!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.tsv.gz ds002322-download/derivatives/task-alice_stim.tsv.gz
+!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.json ds002322-download/derivatives/sub-18/sub-18_task-alice_stim.json
+```
+
+And, lastly, because for this dataset the derivatives folder is missing timing information for the BOLD files - we are only interested in the TR - we have to copy that as well.
+
+```python
+!cp ds002322-download/sub-18/sub-18_task-alice_bold.json ds002322-download/derivatives/sub-18/sub-18_task-alice_bold.json 
+```
+
+We are now ready to define some model parameters and train the encoding model.
+
+```python
+from voxelwiseencoding.process_bids import run_model_for_subject
+
+# these are the parameters used for preprocessing the BOLD fMRI files
+bold_prep_params = {standardize: 'zscore', detrend: True}
+
+# and for lagging the stimulus as well - we want to include 6 sec stimulus segments to predict fMRI
+lagging_params = {'lag_time': 6}
+
+# these are the parameters for sklearn's Ridge estimator
+ridge_params = {'alphas': [1e-1, 1, 100, 1000], 'n_splits': 3, 'normalize': True}
+
+
+ridges, scores, computed_mask = run_model_for_subject('18', 'ds002322-download/derivatives',
+                                                      task='alice', mask='epi', bold_prep_kwargs=bold_prep_params,
+                                                      preprocess_kwargs=lagging_params, encoding_kwargs=ridge_params)
+```
 
 
 ## Documentation
