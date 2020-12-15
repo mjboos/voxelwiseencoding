@@ -151,7 +151,7 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
                                create_metadata_filename_from_args(subject_label, task=task, **kwargs)), 'r') as fl:
             task_meta = json.load(fl)
     except FileNotFoundError:
-        with open(os.path.join(args.bids_dir, 'task-{}_bold.json'.format(task)), 'r') as fl:
+        with open(os.path.join(bids_dir, 'task-{}_bold.json'.format(task)), 'r') as fl:
             task_meta = json.load(fl)
 
     # first check if subject specific stimulus files exist
@@ -162,11 +162,11 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
         if not stim_tsv:
             # try to get tsvs in root directory without subject specifier
             root_glob = '_'.join(stim_glob.split('_')[1:])
-            stim_tsv = glob(os.path.join(args.bids_dir,
+            stim_tsv = glob(os.path.join(bids_dir,
                                             '.'.join([root_glob, 'tsv.gz'])))
             if not stim_tsv:
                 # and check again in root for tsv
-                stim_tsv = glob(os.path.join(args.bids_dir,
+                stim_tsv = glob(os.path.join(bids_dir,
                                                 '.'.join([root_glob, 'tsv'])))
                 if not stim_tsv:
                     raise ValueError('No stimulus files found! [Mention naming scheme and location here]')
@@ -210,6 +210,8 @@ def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=N
         bold_prep_kwargs = {}
     if encoding_kwargs is None:
         encoding_kwargs = {}
+    if preprocess_kwargs is None:
+        preprocess_kwargs = {}
 
 
     bold_files, task_meta, stim_tsv, stim_json = process_bids_subject(subject_label, bids_dir, **kwargs)
