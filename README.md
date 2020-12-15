@@ -55,7 +55,7 @@ We are now ready to define some model parameters and train the encoding model.
 from voxelwiseencoding.process_bids import run_model_for_subject
 
 # these are the parameters used for preprocessing the BOLD fMRI files
-bold_prep_params = {standardize: 'zscore', detrend: True}
+bold_prep_params = {'standardize': 'zscore', 'detrend': True}
 
 # and for lagging the stimulus as well - we want to include 6 sec stimulus segments to predict fMRI
 lagging_params = {'lag_time': 6}

@@ -142,7 +142,7 @@ Similarly, for each left-out fold, Ridge regression models (trained on the remai
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">voxelwiseencoding.process_bids</span> <span class="k">import</span> <span class="n">run_model_for_subject</span>
 
 <span class="c1"># these are the parameters used for preprocessing the BOLD fMRI files</span>
-<span class="n">bold_prep_params</span> <span class="o">=</span> <span class="p">{</span><span class="n">standardize</span><span class="p">:</span> <span class="s1">&#39;zscore&#39;</span><span class="p">,</span> <span class="n">detrend</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<span class="n">bold_prep_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;standardize&#39;</span><span class="p">:</span> <span class="s1">&#39;zscore&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
 <span class="c1"># and for lagging the stimulus as well - we want to include 6 sec stimulus segments to predict fMRI</span>
 <span class="n">lagging_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lag_time&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">}</span>
