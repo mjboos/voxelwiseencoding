@@ -13,6 +13,7 @@ jobs:
       run: |
         pip install nbdev jupyter
         pip install -e .
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Read all notebooks
       run: |
         nbdev_read_nbs
