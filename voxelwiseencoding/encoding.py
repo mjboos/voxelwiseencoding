@@ -45,7 +45,6 @@ def get_ridge_plus_scores(X, y, alphas=None, n_splits=8, scorer=None, voxel_sele
         alphas = [1000]
     ridges = []
     score_list = []
-    # TODO: likely memory inefficient, should be changed
     if voxel_selection:
         voxel_var = np.var(y, axis=0)
         y = y[:, voxel_var > 0.]

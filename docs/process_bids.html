@@ -54,7 +54,7 @@ nb_path: "process_bids.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="run_model_for_subject" class="doc_header"><code>run_model_for_subject</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/process_bids.py#L186" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>run_model_for_subject</code>(<strong><code>subject_label</code></strong>, <strong><code>bids_dir</code></strong>, <strong><code>mask</code></strong>=<em><code>None</code></em>, <strong><code>bold_prep_kwargs</code></strong>=<em><code>None</code></em>, <strong><code>preprocess_kwargs</code></strong>=<em><code>None</code></em>, <strong><code>encoding_kwargs</code></strong>=<em><code>None</code></em>, <strong>**<code>kwargs</code></strong>)</p>
+<h4 id="run_model_for_subject" class="doc_header"><code>run_model_for_subject</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/process_bids.py#L186" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>run_model_for_subject</code>(<strong><code>subject_label</code></strong>, <strong><code>bids_dir</code></strong>, <strong><code>mask</code></strong>=<em><code>None</code></em>, <strong><code>bold_prep_kwargs</code></strong>=<em><code>None</code></em>, <strong><code>preprocess_kwargs</code></strong>=<em><code>None</code></em>, <strong><code>encoding_kwargs</code></strong>=<em><code>None</code></em>, <strong><code>validate</code></strong>=<em><code>True</code></em>, <strong>**<code>kwargs</code></strong>)</p>
 </blockquote>
 <p>Runs voxel-wise encoding model for a single subject and returns Ridges and scores</p>
 <p>Parameters</p>
@@ -68,6 +68,9 @@ preprocess_kwargs : None or dict containing the parameters for lagging and align
                     acceptable parameters are ones used by preprocessing.make_X_Y
 encoding_kwargs : None or dict containing the parameters for the encoding model
                   acceptable parameters are ones used by encoding.get_ridge_plus_scores
+validate : Boolean, default True,
+           whether to validate the model via cross-validation and return
+           a model for each train/test split and scores for each test set
 kwargs : additional BIDS specific arguments such as task, ses, desc, and recording
 
 </code></pre>

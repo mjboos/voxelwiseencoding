@@ -1,4 +1,3 @@
-
 # Voxel-wise encoding models for BIDS datasets with naturalistic stimuli
 > This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file.
 

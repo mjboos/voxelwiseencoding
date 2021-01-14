@@ -81,7 +81,7 @@ kwargs : additional arguments transferred to ridge_gridsearch_per_target
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="/voxelwiseencoding/encoding.html#get_ridge_plus_scores"><code>get_ridge_plus_scores</code></a> is a convenience function that trains <code>n_splits</code> Ridge regressions in a cross-validation scheme and evaluates their performance on the respectice held-out set.</p>
+<p><a href="/voxelwiseencoding/encoding.html#get_ridge_plus_scores"><code>get_ridge_plus_scores</code></a> is a convenience function that trains <code>n_splits</code> Ridge regressions in a cross-validation scheme and evaluates their performance on the respective test set.</p>
 
 </div>
 </div>
@@ -97,7 +97,7 @@ kwargs : additional arguments transferred to ridge_gridsearch_per_target
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="ridge_gridsearch_per_target" class="doc_header"><code>ridge_gridsearch_per_target</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L63" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>ridge_gridsearch_per_target</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>alphas</code></strong>, <strong><code>n_splits</code></strong>=<em><code>5</code></em>, <strong>**<code>kwargs</code></strong>)</p>
+<h4 id="ridge_gridsearch_per_target" class="doc_header"><code>ridge_gridsearch_per_target</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L62" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>ridge_gridsearch_per_target</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>alphas</code></strong>, <strong><code>n_splits</code></strong>=<em><code>5</code></em>, <strong>**<code>kwargs</code></strong>)</p>
 </blockquote>
 <p>Runs Ridge gridsearch across alphas for each target in y</p>
 <p>Parameters</p>
@@ -133,7 +133,7 @@ kwargs : keyword parameters to be transferred to Ridge regression
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Example">Example<a class="anchor-link" href="#Example"> </a></h1><p>First, we create some simulated data of <code>stimulus</code> and <code>fmri</code>.</p>
+<h1 id="Example">Example<a class="anchor-link" href="#Example"> </a></h1><p>First, we create some simulated <code>stimulus</code> and <code>fmri</code> data.</p>
 
 </div>
 </div>
@@ -159,7 +159,7 @@ kwargs : keyword parameters to be transferred to Ridge regression
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We can now use <a href="/voxelwiseencoding/encoding.html#get_ridge_plus_scores"><code>get_ridge_plus_scores</code></a> to estimate multiple <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html">Ridge</a> regressions, one for each voxel (that maps the stimulus representation to this voxel) and one for each split (trained on a different training set and evaluated on the held-out set).
-Since sklearn's <code>Ridge</code> estimator allows multi-output, we only get a <code>Ridge</code> object per split.</p>
+Since sklearn's <code>Ridge</code> estimator allows multi-output, we get one <code>Ridge</code> object per split.</p>
 
 </div>
 </div>
@@ -211,7 +211,8 @@ Since sklearn's <code>Ridge</code> estimator allows multi-output, we only get a 
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We also get a set of scores (by default the <a href="https://en.wikipedia.org/wiki/Pearson_correlation_coefficient">product moment correlation</a>, but you can supply your own via the <code>scorer</code> argument) that specifies how well we predict left-out data (with the usual caveats of using a correlation coefficient for evaluating it). In our case it is of shape (10, 3) because we predict 10 voxels and use a 3-fold cross-validation, i.e. we split 3 times.</p>
+<p>Each <code>Ridge</code> estimator maps from the feature space to each voxel.
+In our example, that means it has 10 (the number of voxels-9 independently trained regression models with 5 coeficients each (the number of features).</p>
 
 </div>
 </div>
@@ -223,8 +224,8 @@ Since sklearn's <code>Ridge</code> estimator allows multi-output, we only get a 
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="n">scores</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -237,30 +238,99 @@ Since sklearn's <code>Ridge</code> estimator allows multi-output, we only get a 
 <div class="output_area">
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(10, 3)
+<pre>[[ 0.03091656 -0.00552985  0.01743601  0.01279568  0.01053411]
+ [ 0.00238455  0.0045204   0.00256562 -0.00748261 -0.00547277]
+ [-0.00422868 -0.02666707  0.01187212 -0.02378444  0.03065698]
+ [ 0.03035251 -0.01177954  0.01668209 -0.0109779   0.01566495]
+ [ 0.0076802  -0.01518692 -0.01891325 -0.00329026 -0.00599254]
+ [-0.01751964  0.00928253  0.00283076  0.01285903 -0.02664727]
+ [ 0.03044979  0.02130243  0.01450193 -0.00512366  0.0111223 ]
+ [-0.00812324 -0.00502767 -0.00471382  0.00727634 -0.02175445]
+ [ 0.03337194  0.01006145 -0.01272059 -0.01134752 -0.01544005]
+ [ 0.00368844  0.01035971 -0.03002989 -0.01830897 -0.00994489]]
 </pre>
 </div>
 </div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We also get a set of scores (by default the <a href="https://en.wikipedia.org/wiki/Pearson_correlation_coefficient">product moment correlation</a>, but you can supply your own via the <code>scorer</code> argument) that specifies how well we predict left-out data (with the usual caveats of using a correlation coefficient for evaluating it). In our case it is of shape (10, 3) because we predict 10 voxels and use a 3-fold cross-validation, i.e. we split 3 times.</p>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">scores</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
 
 <div class="output_area">
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>array([[ 0.06290033, -0.00997016, -0.00792117],
-       [-0.01301689,  0.02528423, -0.00265887],
-       [ 0.00782036, -0.01969563, -0.044481  ],
-       [ 0.01435211, -0.01384505, -0.04758541],
-       [ 0.03499081, -0.01899065, -0.06801739],
-       [ 0.08777199,  0.01931685,  0.08959935],
-       [ 0.01563399, -0.03672842, -0.05399268],
-       [-0.05259006, -0.02230779, -0.02272438],
-       [-0.07706426, -0.01217039, -0.07071412],
-       [-0.0412908 , -0.10162923, -0.00832372]])</pre>
+<pre>array([[-0.01731239, -0.03907288,  0.04493863],
+       [ 0.00467211, -0.06636354, -0.0427261 ],
+       [-0.02978713,  0.06524192,  0.06223558],
+       [-0.03216798, -0.00690511, -0.02197701],
+       [ 0.07491743,  0.06247747, -0.00317411],
+       [-0.0297277 , -0.0455451 , -0.01514241],
+       [ 0.09316656,  0.0493194 ,  0.0818891 ],
+       [-0.01266644, -0.06847899, -0.06770772],
+       [ 0.04326812,  0.08139216,  0.04508078],
+       [ 0.06647038,  0.0544588 ,  0.02366174]])</pre>
 </div>
 
 </div>
 
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Of course we can also call specify which hyperparameters we want to use.
+For example the values of the regularization parameter $\alpha$ we want to perform a gridsearch over or whether we want to normalize features.</p>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">alphas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
+<span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_ridge_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                                       <span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span>
+                                       <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">normalize</span>
+</pre></div>
+
+    </div>
 </div>
 </div>
 

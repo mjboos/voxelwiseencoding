@@ -2,24 +2,18 @@
 import argparse
 import os
 import subprocess
-import nibabel
 import numpy
-from glob import glob
-from voxelwiseencoding.preprocessing import preprocess_bold_fmri, make_X_Y
-from voxelwiseencoding.encoding import get_ridge_plus_scores
-from voxelwiseencoding.process_bids import run_model_for_subject, create_output_filename_from_args
 import json
+from glob import glob
 import joblib
 import numpy as np
-from nilearn.masking import unmask
-from nilearn.image import new_img_like, concat_imgs
 from nibabel import save
+from voxelwiseencoding.process_bids import run_model_for_subject, create_output_filename_from_args
+from nilearn.masking import unmask
+from nilearn.image import concat_imgs
 
 __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'version')).read()
-
-
-
 def run(command, env={}):
     merged_env = os.environ
     merged_env.update(env)
@@ -35,8 +29,9 @@ def run(command, env={}):
     if process.returncode != 0:
         raise Exception("Non zero return code: {}".format(process.returncode))
 
-
 if __name__=='__main__':
+    __version__ = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'version')).read()
     parser = argparse.ArgumentParser(description='Voxelwise Encoding BIDS App.')
     parser.add_argument('bids_dir', help='The directory with the input dataset '
                         'formatted according to the BIDS standard.')
@@ -126,7 +121,6 @@ if __name__=='__main__':
         filename_output = create_output_filename_from_args(subject_label, **vars(args))
         joblib.dump(ridges, os.path.join(args.output_dir, '{0}_{1}ridges.pkl'.format(filename_output, identifier)))
 
-        # TODO: test if this works without a mask
         if mask:
             scores_bold = concat_imgs([unmask(scores_fold, mask) for scores_fold in scores.T])
 
