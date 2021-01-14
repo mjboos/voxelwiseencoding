@@ -22,7 +22,8 @@ First we need to download the data and extract a stimulus representation:
 
 
 ```python
-!aws s3 sync --no-sign-request s3://openneuro.org/ds002322 ds002322-download/
+#hide_output
+!aws s3 sync --no-sign-request s3://openneuro.org/ds002322 /data/ds002322-download/
 import json
 # these are the parameters for extracting a Mel spectrogram
 # for computational ease in this example we want 1 sec segments of 31 Mel frequencies with a max frequency of * KHz
@@ -32,20 +33,20 @@ with open('config.json', 'w+') as fl:
 
 !git clone https://github.com/mjboos/audio2bidsstim/
 !pip install -r audio2bidsstim/requirements.txt
-!python audio2bidsstim/wav_files_to_bids_tsv.py ds002322-download/stimuli/DownTheRabbitHoleFinal_mono_exp120_NR16_pad.wav -c config.json
+!python audio2bidsstim/wav_files_to_bids_tsv.py /data/ds002322-download/stimuli/DownTheRabbitHoleFinal_mono_exp120_NR16_pad.wav -c config.json
 ```
 
 We then need to copy the extracted stimulus representation into the BIDS folder.
 
 ```python
-!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.tsv.gz ds002322-download/derivatives/task-alice_stim.tsv.gz
-!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.json ds002322-download/derivatives/sub-18/sub-18_task-alice_stim.json
+!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.tsv.gz /data/ds002322-download/derivatives/task-alice_stim.tsv.gz
+!cp DownTheRabbitHoleFinal_mono_exp120_NR16_pad.json /data/ds002322-download/derivatives/sub-22/sub-22_task-alice_stim.json
 ```
 
 And, lastly, because for this dataset the derivatives folder is missing timing information for the BOLD files - we are only interested in the TR - we have to copy that as well.
 
 ```python
-!cp ds002322-download/sub-18/sub-18_task-alice_bold.json ds002322-download/derivatives/sub-18/sub-18_task-alice_bold.json 
+!cp /data/ds002322-download/sub-22/sub-22_task-alice_bold.json /data/ds002322-download/derivatives/sub-22/sub-22_task-alice_bold.json 
 ```
 
 We are now ready to define some model parameters and train the encoding model.
@@ -60,13 +61,33 @@ bold_prep_params = {'standardize': 'zscore', 'detrend': True}
 lagging_params = {'lag_time': 6}
 
 # these are the parameters for sklearn's Ridge estimator
-ridge_params = {'alphas': [1e-1, 1, 100, 1000], 'n_splits': 3, 'normalize': True}
+ridge_params = {'alphas': [1e-1, 1, 100, 1000],
+                'n_splits': 3, 'normalize': True}
 
 
-ridges, scores, computed_mask = run_model_for_subject('18', 'ds002322-download/derivatives',
+ridges, scores, computed_mask = run_model_for_subject('22', '/data/ds002322-download/derivatives',
                                                       task='alice', mask='epi', bold_prep_kwargs=bold_prep_params,
                                                       preprocess_kwargs=lagging_params, encoding_kwargs=ridge_params)
 ```
+
+We can now assess the quality out-of-sample prediction (in terms of product-moment correlations) of our models and visualize where we can predict well.
+
+```python
+from nilearn.masking import unmask
+from nilearn.plotting import plot_stat_map
+plot_stat_map(unmask(scores.mean(axis=-1), computed_mask), threshold=0.1)
+```
+
+
+
+
+    <nilearn.plotting.displays.OrthoSlicer at 0x7fbbd11a2320>
+
+
+
+
+![png](docs/images/output_10_1.png)
+
 
 
 ## Documentation
