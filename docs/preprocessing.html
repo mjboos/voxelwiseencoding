@@ -26,6 +26,20 @@ nb_path: "preprocessing.ipynb"
     
 <div class="cell border-box-sizing code_cell rendered">
 
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Bad value in file Path(&#39;/home/mboos/.config/matplotlib/stylelib/mb.mplstyle&#39;), line 20 (&#39;grid.linewidth: white&#39;): Key grid.linewidth: Could not convert &#39;white&#39; to float
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
     {% endraw %}
 
@@ -134,7 +148,7 @@ kwargs : further arguments for nilearn's clean function
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="make_X_Y" class="doc_header"><code>make_X_Y</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/preprocessing.py#L153" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>make_X_Y</code>(<strong><code>stimuli</code></strong>, <strong><code>fmri</code></strong>, <strong><code>TR</code></strong>, <strong><code>stim_TR</code></strong>, <strong><code>lag_time</code></strong>=<em><code>6.0</code></em>, <strong><code>start_times</code></strong>=<em><code>None</code></em>, <strong><code>offset_stim</code></strong>=<em><code>0.0</code></em>, <strong><code>fill_value</code></strong>=<em><code>nan</code></em>, <strong><code>remove_nans</code></strong>=<em><code>True</code></em>)</p>
+<h4 id="make_X_Y" class="doc_header"><code>make_X_Y</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/preprocessing.py#L156" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>make_X_Y</code>(<strong><code>stimuli</code></strong>, <strong><code>fmri</code></strong>, <strong><code>TR</code></strong>, <strong><code>stim_TR</code></strong>, <strong><code>lag_time</code></strong>=<em><code>6.0</code></em>, <strong><code>start_times</code></strong>=<em><code>None</code></em>, <strong><code>offset_stim</code></strong>=<em><code>0.0</code></em>, <strong><code>fill_value</code></strong>=<em><code>nan</code></em>, <strong><code>remove_nans</code></strong>=<em><code>True</code></em>)</p>
 </blockquote>
 <p>Creates (lagged) features and fMRI matrices concatenated along runs</p>
 <p>Parameters</p>
@@ -306,8 +320,8 @@ Since we potentially want to preprocess and concatenate multiple runs, both <cod
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_X_Y</span><span class="p">([</span><span class="n">stimulus</span><span class="p">],</span> <span class="p">[</span><span class="n">fmri</span><span class="p">],</span> <span class="n">TR</span><span class="p">,</span> <span class="n">stim_TR</span><span class="p">,</span> <span class="n">lag_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset_stim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_times</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -319,17 +333,8 @@ Since we potentially want to preprocess and concatenate multiple runs, both <cod
 
 <div class="output_area">
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>(4, 20)
-(4, 1)
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>/home/mboos/anaconda3/envs/mne/lib/python3.7/site-packages/ipykernel_launcher.py:51: RuntimeWarning: lag_time is equal to TR, no stimulus lagging will be done.
+<pre>/home/mboos/anaconda3/envs/mne/lib/python3.7/site-packages/ipykernel_launcher.py:50: RuntimeWarning: lag_time is equal to TR, no stimulus lagging will be done.
 </pre>
 </div>
 </div>
@@ -364,26 +369,11 @@ This means that our encoding model can approximate a hemodynamic response functi
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_X_Y</span><span class="p">([</span><span class="n">stimulus</span><span class="p">],</span> <span class="p">[</span><span class="n">fmri</span><span class="p">],</span> <span class="n">TR</span><span class="p">,</span> <span class="n">stim_TR</span><span class="p">,</span> <span class="n">lag_time</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">offset_stim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_times</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>(3, 40)
-(3, 1)
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -406,26 +396,11 @@ In practice this means we estimate an hemodynamic response function (HRF) by a F
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_X_Y</span><span class="p">([</span><span class="n">stimulus</span><span class="p">],</span> <span class="p">[</span><span class="n">fmri</span><span class="p">],</span> <span class="n">TR</span><span class="p">,</span> <span class="n">stim_TR</span><span class="p">,</span> <span class="n">lag_time</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">offset_stim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">start_times</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>(2, 40)
-(2, 1)
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -448,26 +423,11 @@ In practice this means we estimate an hemodynamic response function (HRF) by a F
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_X_Y</span><span class="p">([</span><span class="n">stimulus</span><span class="p">],</span> <span class="p">[</span><span class="n">fmri</span><span class="p">],</span> <span class="n">TR</span><span class="p">,</span> <span class="n">stim_TR</span><span class="p">,</span> <span class="n">lag_time</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">offset_stim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">start_times</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">remove_nans</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>(4, 40)
-(4, 1)
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -488,7 +448,8 @@ In practice this means we estimate an hemodynamic response function (HRF) by a F
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">60</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -544,7 +505,7 @@ Keep in mind that the stimulus at t=0s corresponds to the first 2s of the stimul
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="generate_lagged_stimulus" class="doc_header"><code>generate_lagged_stimulus</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/preprocessing.py#L51" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>generate_lagged_stimulus</code>(<strong><code>stimulus</code></strong>, <strong><code>fmri_samples</code></strong>, <strong><code>TR</code></strong>, <strong><code>stim_TR</code></strong>, <strong><code>lag_time</code></strong>=<em><code>6.0</code></em>, <strong><code>start_time</code></strong>=<em><code>0.0</code></em>, <strong><code>offset_stim</code></strong>=<em><code>0.0</code></em>, <strong><code>fill_value</code></strong>=<em><code>nan</code></em>)</p>
+<h4 id="generate_lagged_stimulus" class="doc_header"><code>generate_lagged_stimulus</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/preprocessing.py#L55" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>generate_lagged_stimulus</code>(<strong><code>stimulus</code></strong>, <strong><code>fmri_samples</code></strong>, <strong><code>TR</code></strong>, <strong><code>stim_TR</code></strong>, <strong><code>lag_time</code></strong>=<em><code>6.0</code></em>, <strong><code>start_time</code></strong>=<em><code>0.0</code></em>, <strong><code>offset_stim</code></strong>=<em><code>0.0</code></em>, <strong><code>fill_value</code></strong>=<em><code>nan</code></em>)</p>
 </blockquote>
 <p>Generates a lagged stimulus representation temporally aligned with the fMRI data</p>
 <p>Parameters</p>

@@ -42,6 +42,10 @@ def get_remove_idx(lagged_stimulus, remove_nan=True):
     '''Returns indices of rows in lagged_stimulus to remove'''
     if remove_nan is True:
         return np.where(np.any(np.isnan(lagged_stimulus), axis=1))[0]
+    elif remove_nan is False:
+        # This will raise an error if it is supplied to np.delete
+        # which is what we want
+        return None
     elif remove_nan <= 1. and remove_nan >= 0.:
         return np.where(np.isnan(lagged_stimulus).mean(axis=1) > remove_nan)[0]
     else:
@@ -117,7 +121,6 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
             stimulus = np.vstack([stimulus, np.full((n_append, n_features), fill_value)])
 
     # now reshape and lag
-    # TODO: check for memory footprint wrt copying
     stimulus = np.reshape(stimulus, (-1, stim_samples_per_TR * n_features))
 
     # check if stimulus is longer than fmri and remove part of the stimulus
