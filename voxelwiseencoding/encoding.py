@@ -9,6 +9,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import KFold
 from sklearn.linear_model import RidgeCV
 import warnings
+import copy
 
 def product_moment_corr(x,y):
     '''Product-moment correlation for two ndarrays x, y'''
@@ -20,8 +21,6 @@ def product_moment_corr(x,y):
     return r
 
 # Cell
-# TODO: check if estimator is multi-output, if not wrap in multioutputregressor and warn user
-
 
 def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=None,
                           voxel_selection=True, validation=True):
@@ -45,7 +44,7 @@ def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=
     Returns
         tuple of n_splits estimators trained on training folds or single estimator if validation is False
         and scores for all concatenated out-of-fold predictions'''
-    import copy
+    from sklearn.utils.estimator_checks import check_regressor_multioutput
     if scorer is None:
         scorer = product_moment_corr
     kfold = KFold(n_splits=n_splits)
@@ -60,6 +59,7 @@ def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=
                           'Voxels will not have individual regularization parameters.'
                           'Update scikit-learn >= 0.24 to change.')
             estimator = RidgeCV()
+
     if voxel_selection:
         voxel_var = np.var(y, axis=0)
         y = y[:, voxel_var > 0.]
