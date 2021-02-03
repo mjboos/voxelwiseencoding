@@ -13,7 +13,8 @@ import nibabel
 import numpy
 from glob import glob
 from .preprocessing import preprocess_bold_fmri, make_X_Y
-from .encoding import get_ridge_plus_scores, ridge_gridsearch_per_target
+from .encoding import get_model_plus_scores
+from sklearn.linear_model import RidgeCV
 import json
 import joblib
 import numpy as np
@@ -184,7 +185,7 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
 # Cell
 
 def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=None,
-                          preprocess_kwargs=None, encoding_kwargs=None, validate=True,
+                          preprocess_kwargs=None, estimator=None, encoding_kwargs=None,
                           **kwargs):
     '''Runs voxel-wise encoding model for a single subject and returns Ridges and scores
 
@@ -197,11 +198,11 @@ def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=N
                            everything that is accepted by nilearn's clean function is an acceptable parameter
         preprocess_kwargs : None or dict containing the parameters for lagging and aligning fMRI and stimulus
                             acceptable parameters are ones used by preprocessing.make_X_Y
-        encoding_kwargs : None or dict containing the parameters for the encoding model
-                          acceptable parameters are ones used by encoding.get_ridge_plus_scores
-        validate : Boolean, default True,
-                   whether to validate the model via cross-validation and return
-                   a model for each train/test split and scores for each test set
+        estimator : None or sklearn-like estimator to use as an encoding model
+                    default uses RidgeCV with individual alpha per target when possible
+        encoding_kwargs : None or dict containing the parameters for evaluating the encoding model
+                          Valid parameters are the ones accepted by encoding.get_model_plus_scores
+
         kwargs : additional BIDS specific arguments such as task, ses, desc, and recording
 
     Returns
@@ -243,10 +244,8 @@ def run_model_for_subject(subject_label, bids_dir, mask=None, bold_prep_kwargs=N
         stimuli, preprocessed_data, task_meta['RepetitionTime'],
         stim_TR, start_times=start_times, **preprocess_kwargs)
 
-    if validate:
-        # compute ridge and scores for folds
-        ridges, scores = get_ridge_plus_scores(stimuli, preprocessed_data, **encoding_kwargs)
-        return ridges, scores, mask
-    else:
-        ridges = ridge_gridsearch_per_target(stimuli, preprocessed_data, **encoding_kwargs)
-        return ridges, None, mask
+    # compute ridge and scores for folds
+    models, scores = get_model_plus_scores(stimuli, preprocessed_data,
+                                           estimator=estimator,
+                                           **encoding_kwargs)
+    return models, scores, mask

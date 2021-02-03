@@ -3,8 +3,7 @@
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
 index = {"product_moment_corr": "encoding.ipynb",
-         "get_ridge_plus_scores": "encoding.ipynb",
-         "ridge_gridsearch_per_target": "encoding.ipynb",
+         "get_model_plus_scores": "encoding.ipynb",
          "preprocess_bold_fmri": "preprocessing.ipynb",
          "get_remove_idx": "preprocessing.ipynb",
          "generate_lagged_stimulus": "preprocessing.ipynb",
