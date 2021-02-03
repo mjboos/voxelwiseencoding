@@ -23,7 +23,7 @@ def product_moment_corr(x,y):
 # Cell
 
 def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=None,
-                          voxel_selection=True, validation=True):
+                          voxel_selection=True, validation=True, **kwargs):
     '''Returns multiple estimator trained in a cross-validation on n_splits of the data and scores on the left-out folds
 
     Parameters
@@ -40,7 +40,9 @@ def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=
                           This will set scores for these voxels to zero.
         validation : bool, optional, default True
                      Whether to validate the model via cross-validation
-                     or to just train the estimator - if False, scores will be computed on the training set
+                     or to just train the estimator
+                     if False, scores will be computed on the training set
+        kwargs : additional parameters that will be used to initialize RidgeCV if estimator is None
     Returns
         tuple of n_splits estimators trained on training folds or single estimator if validation is False
         and scores for all concatenated out-of-fold predictions'''
@@ -51,14 +53,7 @@ def get_model_plus_scores(X, y, estimator=None, alphas=None, n_splits=8, scorer=
     models = []
     score_list = []
     if estimator is None:
-        try:
-            estimator = RidgeCV(alpha_per_target=True)
-        except TypeError:
-            # sklearn version below 0.24
-            warnings.warn('scikit-learn version below 0.24.'
-                          'Voxels will not have individual regularization parameters.'
-                          'Update scikit-learn >= 0.24 to change.')
-            estimator = RidgeCV()
+        estimator = RidgeCV(**kwargs)
 
     if voxel_selection:
         voxel_var = np.var(y, axis=0)

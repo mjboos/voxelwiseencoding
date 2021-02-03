@@ -40,7 +40,7 @@ nb_path: "encoding.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="get_model_plus_scores" class="doc_header"><code>get_model_plus_scores</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L25" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>get_model_plus_scores</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>estimator</code></strong>=<em><code>None</code></em>, <strong><code>alphas</code></strong>=<em><code>None</code></em>, <strong><code>n_splits</code></strong>=<em><code>8</code></em>, <strong><code>scorer</code></strong>=<em><code>None</code></em>, <strong><code>voxel_selection</code></strong>=<em><code>True</code></em>, <strong><code>validation</code></strong>=<em><code>True</code></em>)</p>
+<h4 id="get_model_plus_scores" class="doc_header"><code>get_model_plus_scores</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L25" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>get_model_plus_scores</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>estimator</code></strong>=<em><code>None</code></em>, <strong><code>alphas</code></strong>=<em><code>None</code></em>, <strong><code>n_splits</code></strong>=<em><code>8</code></em>, <strong><code>scorer</code></strong>=<em><code>None</code></em>, <strong><code>voxel_selection</code></strong>=<em><code>True</code></em>, <strong><code>validation</code></strong>=<em><code>True</code></em>, <strong>**<code>kwargs</code></strong>)</p>
 </blockquote>
 <p>Returns multiple estimator trained in a cross-validation on n_splits of the data and scores on the left-out folds</p>
 <p>Parameters</p>
@@ -57,7 +57,9 @@ voxel_selection : bool, optional, default True
                   This will set scores for these voxels to zero.
 validation : bool, optional, default True
              Whether to validate the model via cross-validation
-             or to just train the estimator - if False, scores will be computed on the training set
+             or to just train the estimator
+             if False, scores will be computed on the training set
+kwargs : additional parameters that will be used to initialize RidgeCV if estimator is None
 </code></pre>
 <p>Returns
     tuple of n_splits estimators trained on training folds or single estimator if validation is False
@@ -144,9 +146,9 @@ Since sklearn's <code>RidgeCV</code> estimator allows multi-output, we get one <
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>[RidgeCV(alpha_per_target=True, alphas=array([ 0.1,  1. , 10. ])),
- RidgeCV(alpha_per_target=True, alphas=array([ 0.1,  1. , 10. ])),
- RidgeCV(alpha_per_target=True, alphas=array([ 0.1,  1. , 10. ]))]</pre>
+<pre>[RidgeCV(alphas=array([ 0.1,  1. , 10. ])),
+ RidgeCV(alphas=array([ 0.1,  1. , 10. ])),
+ RidgeCV(alphas=array([ 0.1,  1. , 10. ]))]</pre>
 </div>
 
 </div>
@@ -186,16 +188,16 @@ In our example, that means it has 10 (the number of voxels-9 independently train
 <div class="output_area">
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>[[-0.03148284 -0.03085741 -0.03709923 -0.03938465  0.00740931]
- [ 0.05844587 -0.03454859 -0.00971743  0.04779117  0.04717684]
- [-0.06610763  0.02024515 -0.00519406  0.01604151  0.06232265]
- [-0.00847565  0.01357303  0.04579654 -0.03709936  0.03114387]
- [ 0.01942072  0.0222861  -0.02364503  0.00061965  0.10216772]
- [ 0.00359469 -0.04175064 -0.0503723  -0.00041977 -0.05407095]
- [ 0.03992998 -0.00829027 -0.03257733  0.02132598 -0.02921803]
- [ 0.07730107 -0.03277048 -0.0112798  -0.10295067 -0.00743558]
- [-0.01648862 -0.00174828 -0.06699278 -0.05327637  0.01911227]
- [-0.01000438  0.00611579  0.00706875 -0.05508025  0.01144064]]
+<pre>[[ 0.01930266  0.0350985  -0.04548384 -0.01058159 -0.07382483]
+ [ 0.00183012 -0.00830046 -0.03604675 -0.00016843  0.03161116]
+ [-0.04032306  0.01782385  0.02112695  0.01673908 -0.00645515]
+ [ 0.0273047  -0.02382577 -0.06169262  0.06232742 -0.03331368]
+ [ 0.01294108 -0.04825337 -0.04646228 -0.04701512 -0.00017405]
+ [ 0.02008884 -0.07065883  0.01958404 -0.04115758 -0.02967363]
+ [ 0.00502653 -0.02164034 -0.00419562 -0.05675778  0.00716245]
+ [ 0.0080379   0.03230623  0.01527909 -0.02469508 -0.01681562]
+ [ 0.01363082  0.02686557 -0.05923971  0.01392573 -0.00945206]
+ [ 0.01665226 -0.01499506 -0.0043113  -0.01658976  0.06103525]]
 </pre>
 </div>
 </div>
@@ -236,16 +238,16 @@ In our example, that means it has 10 (the number of voxels-9 independently train
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>array([[-0.00489691, -0.04027173, -0.01674204],
-       [-0.06069225, -0.01664182, -0.04291744],
-       [ 0.04152938,  0.00532055, -0.01025946],
-       [ 0.06519698, -0.02780779, -0.04574611],
-       [ 0.02882572,  0.06493467, -0.00487824],
-       [ 0.00728804, -0.02319843,  0.01526909],
-       [-0.03650654, -0.04296925, -0.06727077],
-       [ 0.00508916,  0.07476689,  0.04086158],
-       [ 0.02566022,  0.06741255,  0.05066477],
-       [ 0.05676817, -0.0125262 ,  0.08245368]])</pre>
+<pre>array([[ 0.11195214,  0.10260332,  0.02153565],
+       [-0.06450754, -0.07106461, -0.0447989 ],
+       [ 0.00559572, -0.03221425,  0.02866726],
+       [-0.04101258, -0.02197306, -0.04277958],
+       [ 0.02352969,  0.02008923, -0.02062713],
+       [ 0.01027339,  0.03074076,  0.01248573],
+       [-0.05974497, -0.03980094, -0.11293944],
+       [-0.01607721, -0.02264425, -0.07340733],
+       [-0.06009815, -0.05553956,  0.02102434],
+       [ 0.02388894, -0.01513094,  0.0904367 ]])</pre>
 </div>
 
 </div>
@@ -258,8 +260,8 @@ In our example, that means it has 10 (the number of voxels-9 independently train
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Using-your-own-estimator">Using your own estimator<a class="anchor-link" href="#Using-your-own-estimator"> </a></h2><p>Of course we can also use our own estimator function.
-For example, we use a <code>RidgeCV</code> object with pre-specified hyperparameters, like the values of the regularization parameter $\alpha$ we want to perform a gridsearch over or whether we want to normalize features.</p>
+<p>We can also change the parameters of the <code>RidgeCV</code> function.
+For example, we can use pre-specified hyperparameters, like the values of the regularization parameter $\alpha$ we want to perform a gridsearch over or whether we want to normalize features. If we want to use other parameters for the default <code>RidgeCV</code>, we can just pass the parameters as additional keyword arguments:</p>
 
 </div>
 </div>
@@ -272,10 +274,8 @@ For example, we use a <code>RidgeCV</code> object with pre-specified hyperparame
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">alphas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
-<span class="n">our_estimator</span> <span class="o">=</span> <span class="n">RidgeCV</span><span class="p">(</span><span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha_per_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">our_estimator</span><span class="p">,</span>
-                                       <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span>
+                                       <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha_per_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">normalize</span>
 </pre></div>
 
@@ -288,7 +288,7 @@ For example, we use a <code>RidgeCV</code> object with pre-specified hyperparame
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Additionally, we can use any other estimator that implements <code>fit</code> and <code>predict</code>.
+<h2 id="Using-your-own-estimator">Using your own estimator<a class="anchor-link" href="#Using-your-own-estimator"> </a></h2><p>Additionally, we can use any other estimator that implements <code>fit</code> and <code>predict</code>.
 For example, we can use <a href="https://scikit-learn.org/stable/modules/generated/sklearn.cross_decomposition.CCA.html">CCA</a> as an encoding model.</p>
 
 </div>
