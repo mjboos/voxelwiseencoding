@@ -32,7 +32,7 @@ def create_stim_filename_from_args(subject_label, **kwargs):
                  'ses-{}'.format(kwargs.get('ses')) if kwargs.get('ses') else None,
                  'task-{}'.format(kwargs.get('task')) if kwargs.get('task') else None,
                  'desc-{}'.format(kwargs.get('desc')) if kwargs.get('desc') else None,
-                 '*',
+                 '*',\
                  'recording-{}'.format(kwargs.get('recording')) if kwargs.get('recording') else None,
                  'stim']
     stim_expr = '_'.join([term for term in stim_expr if term])
@@ -117,7 +117,8 @@ def get_func_bold_directory(subject_label, bids_dir, **kwargs):
 
 # Cell
 
-def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None, recording=None, **kwargs):
+def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None,
+                         recording=None, **kwargs):
     '''Localizes BOLD files and stimulus files for subject_label in BIDS folder structure
 
     Parameters
@@ -148,7 +149,8 @@ def process_bids_subject(subject_label, bids_dir, ses=None, task=None, desc=None
     # subject specific metadata takes precedence over other metadata
     try:
         with open(os.path.join(bold_folder,
-                               create_metadata_filename_from_args(subject_label, task=task, **kwargs)), 'r') as fl:
+                               create_metadata_filename_from_args(subject_label, task=task,
+                                                                  **kwargs)), 'r') as fl:
             task_meta = json.load(fl)
     except FileNotFoundError:
         with open(os.path.join(bids_dir, 'task-{}_bold.json'.format(task)), 'r') as fl:

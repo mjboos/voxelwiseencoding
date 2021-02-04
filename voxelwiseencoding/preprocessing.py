@@ -95,6 +95,8 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     stim_samples_per_TR = int(np.round(stim_samples_per_TR))
     if lag_time is None:
         lag_time = TR
+    if lag_time < TR:
+        warnings.warn('lag_time ({}) should not be smaller than TR ({}).'.format(lag_time, TR))
     # check if lag time is multiple of TR
     if not np.isclose(lag_time / TR, np.round(lag_time / TR)):
         raise ValueError('lag_time should be a multiple of TR so '
