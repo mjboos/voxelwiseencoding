@@ -31,7 +31,7 @@ nb_path: "index.ipynb"
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Install">Install<a class="anchor-link" href="#Install"> </a></h2><p>If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running <code>python setup.py</code> or <code>pip install voxelwiseencoding</code>.
+<h2 id="Install">Install<a class="anchor-link" href="#Install"> </a></h2><p>If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running <code>python setup.py</code> or <code>pip install -e voxelwiseencoding</code>.
 You can use the BIDS app either via Docker or directly by calling <a href="/voxelwiseencoding/process_bids.html#run.py"><code>run.py</code></a>.</p>
 
 </div>
@@ -39,10 +39,7 @@ You can use the BIDS app either via Docker or directly by calling <a href="/voxe
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Description">Description<a class="anchor-link" href="#Description"> </a></h2><p>This app allows you to train voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. To specify parameters for the processing of the stimulus (e.g.lagging and offsetting relative to fMRI), you can specify parameters that are supplied to <a href="/voxelwiseencoding/preprocessing.html#make_X_Y"><code>make_X_Y</code></a> in the <a href="/voxelwiseencoding/preprocessing.html"><code>preprocessing</code></a> module as a JSON file. Similarly you can specify parameters to be supplied to <code>get_ridge_plus_scores</code> in the <a href="/voxelwiseencoding/encoding.html"><code>encoding</code></a> module as a JSON as well.
-Masking is done by default, by checking for masks in <code>output_dir/masks/</code> that are either named <code>sub-PARTICIPANT_LABEL_mask.nii.gz</code> (where PARTICIPANT_LABEL is the label provided by the user) or that are named <code>group_mask.nii.gz</code>. To disable masking call with the lag <code>--no-masking</code>.
-Voxel-encoding models are trained in a cross-validation scheme: the parameter <code>n_splits</code> that is supplied to <code>get_ridge_plus_scores</code> via a configuation JSON file determines the number of folds in the cross-validation. Each fold is left out once, while a model is trained (and hyperparameters are tuned) on the remaining folds - model validation is done by voxel-wise <a href="https://en.wikipedia.org/wiki/Pearson_correlation_coefficient">product moment correlation</a> between the predicted and observed fMRI activity for the left-out fold and saved as a 4D nifti in the output folder (with one image per left-out fold).
-Similarly, for each left-out fold, Ridge regression models (trained on the remaining folds) are saved as a pickle file in the output folder.</p>
+<h2 id="Description">Description<a class="anchor-link" href="#Description"> </a></h2><p>This library allows you to train and validate voxel-wise encoding models for a BIDS dataset with a BIDS-compliant stimulus representation. See below for an example on how to use it.</p>
 <h3 id="Example">Example<a class="anchor-link" href="#Example"> </a></h3><p>We are going to use <a href="https://openneuro.org/datasets/ds002322/versions/1.0.4">this</a> dataset to demonstrate an example workflow using the Python package.</p>
 <p>First we need to download the data and extract a stimulus representation:</p>
 
