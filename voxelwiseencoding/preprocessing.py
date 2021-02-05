@@ -53,7 +53,7 @@ def get_remove_idx(lagged_stimulus, remove_nan=True):
 
 # Cell
 def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
-                             lag_time=6.0, start_time=0., offset_stim=0.,
+                             lag_time=None, start_time=0., offset_stim=0.,
                              fill_value=np.nan):
     '''Generates a lagged stimulus representation temporally aligned with the fMRI data
 
@@ -95,6 +95,11 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     stim_samples_per_TR = int(np.round(stim_samples_per_TR))
     if lag_time is None:
         lag_time = TR
+    if np.isclose(lag_time, 0.):
+        warnings.warn('lag_time set to 0 - to disable lagging set lag_time either to None or TR ({}).'
+                      'Defaulting to lag_time=None.'.format( TR))
+        lag_time = TR
+
     if lag_time < TR:
         warnings.warn('lag_time ({}) should not be smaller than TR ({}).'.format(lag_time, TR))
     # check if lag time is multiple of TR
