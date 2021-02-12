@@ -136,7 +136,7 @@ You can use the BIDS app either via Docker or directly by calling <a href="/voxe
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">voxelwiseencoding.process_bids</span> <span class="k">import</span> <span class="n">run_model_for_subject</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">voxelwiseencoding.process_bids</span> <span class="kn">import</span> <span class="n">run_model_for_subject</span>
 
 <span class="c1"># these are the parameters used for preprocessing the BOLD fMRI files</span>
 <span class="n">bold_prep_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;standardize&#39;</span><span class="p">:</span> <span class="s1">&#39;zscore&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
@@ -146,7 +146,7 @@ You can use the BIDS app either via Docker or directly by calling <a href="/voxe
 
 <span class="c1"># these are the parameters for sklearn&#39;s Ridge estimator</span>
 <span class="n">ridge_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;alphas&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1e-1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span>
-                <span class="s1">&#39;n_splits&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;normalize&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+                <span class="s1">&#39;cv&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;normalize&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
 
 <span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">computed_mask</span> <span class="o">=</span> <span class="n">run_model_for_subject</span><span class="p">(</span><span class="s1">&#39;22&#39;</span><span class="p">,</span> <span class="s1">&#39;/data/ds002322-download/derivatives&#39;</span><span class="p">,</span>
@@ -175,8 +175,8 @@ You can use the BIDS app either via Docker or directly by calling <a href="/voxe
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">nilearn.masking</span> <span class="k">import</span> <span class="n">unmask</span>
-<span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="k">import</span> <span class="n">plot_stat_map</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">nilearn.masking</span> <span class="kn">import</span> <span class="n">unmask</span>
+<span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="kn">import</span> <span class="n">plot_stat_map</span>
 <span class="n">plot_stat_map</span><span class="p">(</span><span class="n">unmask</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">computed_mask</span><span class="p">),</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </pre></div>
 

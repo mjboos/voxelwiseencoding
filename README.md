@@ -59,7 +59,7 @@ lagging_params = {'lag_time': 6}
 
 # these are the parameters for sklearn's Ridge estimator
 ridge_params = {'alphas': [1e-1, 1, 100, 1000],
-                'n_splits': 3, 'normalize': True}
+                'cv': 3, 'normalize': True}
 
 
 ridges, scores, computed_mask = run_model_for_subject('22', '/data/ds002322-download/derivatives',

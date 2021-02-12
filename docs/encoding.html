@@ -40,7 +40,7 @@ nb_path: "encoding.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="get_model_plus_scores" class="doc_header"><code>get_model_plus_scores</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L25" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>get_model_plus_scores</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>estimator</code></strong>=<em><code>None</code></em>, <strong><code>n_splits</code></strong>=<em><code>8</code></em>, <strong><code>scorer</code></strong>=<em><code>None</code></em>, <strong><code>voxel_selection</code></strong>=<em><code>True</code></em>, <strong><code>validate</code></strong>=<em><code>True</code></em>, <strong>**<code>kwargs</code></strong>)</p>
+<h4 id="get_model_plus_scores" class="doc_header"><code>get_model_plus_scores</code><a href="https://github.com/mjboos/voxelwiseencoding/tree/master/voxelwiseencoding/encoding.py#L25" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>get_model_plus_scores</code>(<strong><code>X</code></strong>, <strong><code>y</code></strong>, <strong><code>estimator</code></strong>=<em><code>None</code></em>, <strong><code>cv</code></strong>=<em><code>None</code></em>, <strong><code>scorer</code></strong>=<em><code>None</code></em>, <strong><code>voxel_selection</code></strong>=<em><code>True</code></em>, <strong><code>validate</code></strong>=<em><code>True</code></em>, <strong>**<code>kwargs</code></strong>)</p>
 </blockquote>
 <p>Returns multiple estimator trained in a cross-validation on n_splits of the data and scores on the left-out folds</p>
 <p>Parameters</p>
@@ -49,7 +49,10 @@ nb_path: "encoding.ipynb"
 y : ndarray of shape (samples, targets)
 estimator : None or estimator object that implements fit and predict
             if None, uses RidgeCV per default
-n_splits : int, optional, number of cross-validation splits
+cv : int, None, or a cross-validation object that implements a split method, default is None, optional.
+     int specifies the number of cross-validation splits of a KFold cross validation
+     None defaults to a scikit-learn KFold cross-validation with default settings
+     a scikit-learn-like cross-validation object needs to implement a split method for X and y
 scorer : None or any sci-kit learn compatible scoring function, optional
          default uses product moment correlation
 voxel_selection : bool, optional, default True
@@ -84,7 +87,7 @@ kwargs : additional parameters that will be used to initialize RidgeCV if estima
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="/voxelwiseencoding/encoding.html#get_model_plus_scores"><code>get_model_plus_scores</code></a> is a convenience function that trains <code>n_splits</code> Ridge regressions in a cross-validation scheme and evaluates their performance on the respective test set.</p>
+<p><a href="/voxelwiseencoding/encoding.html#get_model_plus_scores"><code>get_model_plus_scores</code></a> is a convenience function that trains multiple Ridge regressions in a cross-validation scheme and evaluates their performance on the respective test set.</p>
 
 </div>
 </div>
@@ -129,7 +132,7 @@ Since sklearn's <code>RidgeCV</code> estimator allows multi-output, we get one <
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ridges</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
 <span class="n">ridges</span>
 </pre></div>
@@ -274,7 +277,7 @@ For example, we can use pre-specified hyperparameters, like the values of the re
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">alphas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">]</span>
-<span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span>
+<span class="n">ridges</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span>
                                        <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha_per_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">normalize</span>
 <span class="k">assert</span> <span class="n">ridges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alphas</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
@@ -302,12 +305,12 @@ For example, we can use <a href="https://scikit-learn.org/stable/modules/generat
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">cross_decomposition</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">cross_decomposition</span>
 
 <span class="n">our_estimator</span> <span class="o">=</span> <span class="n">cross_decomposition</span><span class="o">.</span><span class="n">CCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="n">ccas</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">our_estimator</span><span class="p">,</span>
-                                       <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                                     <span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">ccas</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">cross_decomposition</span><span class="o">.</span><span class="n">_pls</span><span class="o">.</span><span class="n">CCA</span>
 </pre></div>
 
@@ -332,13 +335,13 @@ For example, we can use <a href="https://scikit-learn.org/stable/modules/generat
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">Lasso</span>
-<span class="kn">from</span> <span class="nn">sklearn.multioutput</span> <span class="k">import</span> <span class="n">MultiOutputRegressor</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">Lasso</span>
+<span class="kn">from</span> <span class="nn">sklearn.multioutput</span> <span class="kn">import</span> <span class="n">MultiOutputRegressor</span>
 
 <span class="n">our_estimator</span> <span class="o">=</span> <span class="n">MultiOutputRegressor</span><span class="p">(</span><span class="n">Lasso</span><span class="p">())</span>
 
 <span class="n">lassos</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">our_estimator</span><span class="p">,</span>
-                                       <span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                                       <span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">lassos</span>
 </pre></div>
 
@@ -387,6 +390,36 @@ For example, we can use <a href="https://scikit-learn.org/stable/modules/generat
                                        <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">==</span> <span class="n">RidgeCV</span>
 <span class="k">assert</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">10</span><span class="p">,)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Using-your-own-cross-validation-method">Using your own cross-validation method<a class="anchor-link" href="#Using-your-own-cross-validation-method"> </a></h2><p>Instead of the default <code>KFold</code> cross-validation without shuffling, we can also use any sckit-learn compatible cross-validation iterators (e.g. <a href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation-iterators">these</a>).
+For example, we could use a <code>TimeSerisSplit</code> to test our predictions on only the most recent part of the data.</p>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">TimeSeriesSplit</span>
+
+<span class="n">ts_cv</span> <span class="o">=</span> <span class="n">TimeSeriesSplit</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">model</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">get_model_plus_scores</span><span class="p">(</span><span class="n">stimulus</span><span class="p">,</span> <span class="n">fmri</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">ts_cv</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 </pre></div>
 
     </div>

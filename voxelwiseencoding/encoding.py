@@ -22,7 +22,7 @@ def product_moment_corr(x,y):
 
 # Cell
 
-def get_model_plus_scores(X, y, estimator=None, n_splits=8, scorer=None,
+def get_model_plus_scores(X, y, estimator=None, cv=None, scorer=None,
                           voxel_selection=True, validate=True, **kwargs):
     '''Returns multiple estimator trained in a cross-validation on n_splits of the data and scores on the left-out folds
 
@@ -32,7 +32,10 @@ def get_model_plus_scores(X, y, estimator=None, n_splits=8, scorer=None,
         y : ndarray of shape (samples, targets)
         estimator : None or estimator object that implements fit and predict
                     if None, uses RidgeCV per default
-        n_splits : int, optional, number of cross-validation splits
+        cv : int, None, or a cross-validation object that implements a split method, default is None, optional.
+             int specifies the number of cross-validation splits of a KFold cross validation
+             None defaults to a scikit-learn KFold cross-validation with default settings
+             a scikit-learn-like cross-validation object needs to implement a split method for X and y
         scorer : None or any sci-kit learn compatible scoring function, optional
                  default uses product moment correlation
         voxel_selection : bool, optional, default True
@@ -49,7 +52,10 @@ def get_model_plus_scores(X, y, estimator=None, n_splits=8, scorer=None,
     from sklearn.utils.estimator_checks import check_regressor_multioutput
     if scorer is None:
         scorer = product_moment_corr
-    kfold = KFold(n_splits=n_splits)
+    if cv is None:
+        cv = KFold()
+    if isinstance(cv, int):
+        cv = KFold(n_splits=cv)
     models = []
     score_list = []
     if estimator is None:
@@ -59,7 +65,7 @@ def get_model_plus_scores(X, y, estimator=None, n_splits=8, scorer=None,
         voxel_var = np.var(y, axis=0)
         y = y[:, voxel_var > 0.]
     if validate:
-        for train, test in kfold.split(X, y):
+        for train, test in cv.split(X, y):
             models.append(copy.deepcopy(estimator).fit(X[train], y[train]))
             if voxel_selection:
                 scores = np.zeros_like(voxel_var)
