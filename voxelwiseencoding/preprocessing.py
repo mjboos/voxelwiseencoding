@@ -89,7 +89,6 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
     Returns:
         ndarray of the lagged stimulus of shape (samples, lagged features)
     '''
-    from skimage.util import view_as_windows
     # find out temporal alignment
     stim_samples_per_TR = TR / stim_TR
     if stim_samples_per_TR < 1:
@@ -183,7 +182,6 @@ def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_
     the first element are the (lagged) stimuli,
     the second element is the aligned fMRI data
     '''
-    from skimage.util import view_as_windows
     if len(stimuli) != len(fmri):
         raise ValueError('Stimulus and fMRI need to have the same number of runs. '
         'Instead fMRI has {} and stimulus {} runs.'.format(len(fmri), len(stimuli)))
