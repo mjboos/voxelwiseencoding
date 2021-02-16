@@ -131,7 +131,7 @@ def generate_lagged_stimulus(stimulus, fmri_samples, TR, stim_TR,
             stimulus = stimulus[:-(stimulus.shape[0] % stim_samples_per_TR)]
         else:
             n_append = stim_samples_per_TR - ((stimulus.shape[0]) % stim_samples_per_TR)
-            stimulus = np.vstack([stimulus, np.full((n_append, n_features), fill_value)])
+            stimulus = np.vstack([np.full((n_append, n_features), fill_value), stimulus])
 
     # now reshape and lag
     stimulus = np.reshape(stimulus, (-1, stim_samples_per_TR * n_features))
@@ -205,7 +205,7 @@ def make_X_Y(stimuli, fmri, TR, stim_TR, lag_time=6.0, start_times=None, offset_
         # remove fmri samples recorded after stimulus has ended
         if fmri_run.shape[0] != stimulus.shape[0]:
             # check if the difference is due to offsetting and warn if it is not
-            if offset_stim/TR < abs(fmri_run.shape[0] - stimulus.shape[0]):
+            if np.round(offset_stim/TR) < abs(fmri_run.shape[0] - stimulus.shape[0]):
                 warnings.warn('fMRI data and stimulus samples differ.'
                 ' Removing additional fMRI/stimulus samples. This could mean that you recorded '
                 'after stimulus ended, stopped recording early, or that something went wrong in the '
