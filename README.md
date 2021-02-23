@@ -2,6 +2,15 @@
 > This BIDS App lets you train voxelwise-encoding models for continuous (naturalistic) stimuli provided as a BIDS-compliant continuous recording file.
 
 
+
+![](https://github.com/mjboos/voxelwiseencoding/workflows/CI/badge.svg)
+
+![Schema for voxel-wise encoding models using a BIDS dataset](https://raw.githubusercontent.com/mjboos/voxelwiseencoding/master/scheme_BIDS_encoding.png)
+
+For more information about the specification of BIDS Apps see [here](https://docs.google.com/document/d/1E1Wi5ONvOVVnGhj21S1bmJJ4kyHFT7tkxnV3C23sjIE/).
+For auditory stimuli [this](https://github.com/mjboos/audio2bidsstim/) module can help you convert your wav file to a BIDS stimulus representation.
+
+
 ## Install
 
 If you are only interested in using the Python module for preprocessing fMRI, lagging the stimulus, and training encoding models without the BIDS app, you can install this library by running `python setup.py` or `pip install -e voxelwiseencoding`.
@@ -83,7 +92,7 @@ plot_stat_map(unmask(scores.mean(axis=-1), computed_mask), threshold=0.1)
 
 
 
-![png](docs/images/output_10_1.png)
+![png](docs/images/output_11_1.png)
 
 
 
